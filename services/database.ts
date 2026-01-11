@@ -36,6 +36,7 @@ try {
   db = getFirestore(app);
   storage = getStorage(app);
   isFirebaseInitialized = true;
+  console.log("Firebase initialized successfully");
 } catch (error) {
   console.warn("Firebase Init Error (Using LocalStorage fallback):", error);
 }
@@ -109,7 +110,7 @@ export const databaseService = {
             schoolOrigin: data.schoolOrigin,
             phone: data.phone,
             major: data.major,
-            timestamp: data.timestamp?.toDate().toISOString() || new Date().toISOString()
+            timestamp: data.timestamp?.toDate ? data.timestamp.toDate().toISOString() : new Date().toISOString()
           });
         });
         firebaseSuccess = true;
@@ -164,6 +165,7 @@ export const databaseService = {
     if (isFirebaseInitialized && db) {
       try {
         await setDoc(doc(db, CONFIG_COLLECTION, PRINCIPAL_DOC_ID), data);
+        console.log("Firebase principal data updated successfully");
         firebaseSuccess = true;
       } catch (e) {
         console.warn("Firebase update principal failed, falling back to local storage:", e);
@@ -185,9 +187,18 @@ export const databaseService = {
     // Try Firebase Storage
     if (isFirebaseInitialized && storage) {
       try {
-        const storageRef = ref(storage, `principal-photos/${Date.now()}-${file.name}`);
-        const snapshot = await uploadBytes(storageRef, file);
+        // Sanitize filename to avoid issues with special characters
+        const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
+        const storageRef = ref(storage, `principal-photos/${fileName}`);
+        
+        // Add metadata
+        const metadata = {
+          contentType: file.type,
+        };
+
+        const snapshot = await uploadBytes(storageRef, file, metadata);
         const downloadURL = await getDownloadURL(snapshot.ref);
+        console.log("Firebase photo uploaded:", downloadURL);
         return downloadURL;
       } catch (e) {
         console.warn("Firebase storage upload failed, falling back to Base64:", e);

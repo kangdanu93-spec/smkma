@@ -3,10 +3,27 @@ import { databaseService } from '../services/database';
 import { PrincipalData, NewsItem } from '../types';
 import { UserIcon, CheckBadgeIcon, LoaderIcon, LockIcon, LogOutIcon, NewspaperIcon, PlusIcon, EditIcon, TrashIcon, XIcon, BookIcon } from './ui/Icons';
 
+// Helper to clean up URLs
+const processImageUrl = (url: string) => {
+  if (!url) return '';
+  
+  // Support Google Drive Sharing Links
+  // Convert https://drive.google.com/file/d/ID/view... -> https://drive.google.com/uc?export=view&id=ID
+  if (url.includes('drive.google.com') && url.includes('/file/d/')) {
+      const idMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (idMatch && idMatch[1]) {
+          return `https://drive.google.com/uc?export=view&id=${idMatch[1]}`;
+      }
+  }
+  
+  return url;
+};
+
 export default function AdminPanel() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'principal' | 'news'>('principal');
+  const [showHelp, setShowHelp] = useState(false);
 
   // Login Form State
   const [username, setUsername] = useState('');
@@ -22,9 +39,11 @@ export default function AdminPanel() {
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState('');
+  
+  // Image Validation State
+  const [imgWarning, setImgWarning] = useState('');
+  const [imgError, setImgError] = useState(false);
 
   // News Data State
   const [newsList, setNewsList] = useState<NewsItem[]>([]);
@@ -37,8 +56,6 @@ export default function AdminPanel() {
       date: new Date().toISOString().split('T')[0],
       imageUrl: ''
   });
-  const [newsPhotoFile, setNewsPhotoFile] = useState<File | null>(null);
-  const [newsPreviewUrl, setNewsPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
     // Check session storage on mount
@@ -76,7 +93,6 @@ export default function AdminPanel() {
     const result = await databaseService.getPrincipalData();
     if (result) {
       setData(result);
-      if (result.photoUrl) setPreviewUrl(result.photoUrl);
     } else {
         setData({
             name: 'Siti Komalia, S.Farm',
@@ -96,31 +112,38 @@ export default function AdminPanel() {
       setNewsList(news);
   };
 
-  // --- Principal Handlers ---
-  const handlePrincipalFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setPhotoFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
-    }
+  // --- Image Input Handler ---
+  const handleImageInput = (value: string, type: 'principal' | 'news') => {
+      setImgError(false); // Reset error state on change
+      const processed = processImageUrl(value);
+      
+      let warning = '';
+      if (value.includes('photos.app.goo.gl')) {
+          warning = '⚠️ Ini link album/share. Gunakan link langsung (Klik Kanan > Copy Image Address) atau Google Drive.';
+      } else if (value.includes('authuser=') || (value.includes('googleusercontent.com') && value.length > 50)) {
+           // Warning for likely session-based links
+           warning = '⚠️ Link ini terlihat seperti link sesi sementara (authuser). Sebaiknya gunakan Google Drive (Public) agar gambar awet.';
+      }
+
+      setImgWarning(warning);
+
+      if (type === 'principal') {
+          setData({ ...data, photoUrl: processed });
+      } else {
+          setCurrentNews({ ...currentNews, imageUrl: processed });
+      }
   };
+
+  // --- Principal Handlers ---
 
   const handlePrincipalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     
-    let finalPhotoUrl = data.photoUrl;
-    if (photoFile) {
-      const uploadedUrl = await databaseService.uploadPrincipalPhoto(photoFile);
-      if (uploadedUrl) finalPhotoUrl = uploadedUrl;
-    }
-
-    const updatedData: PrincipalData = { ...data, photoUrl: finalPhotoUrl };
-    const success = await databaseService.updatePrincipalData(updatedData);
+    const success = await databaseService.updatePrincipalData(data);
     if (success) {
       setSuccessMsg('Profil Kepala Sekolah berhasil diperbarui!');
       setTimeout(() => setSuccessMsg(''), 3000);
-      setData(updatedData);
     }
     setSaving(false);
   };
@@ -135,23 +158,17 @@ export default function AdminPanel() {
           date: new Date().toISOString().split('T')[0],
           imageUrl: ''
       });
-      setNewsPhotoFile(null);
-      setNewsPreviewUrl(null);
       setIsEditingNews(false);
-  };
-
-  const handleNewsFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (e.target.files && e.target.files[0]) {
-        const file = e.target.files[0];
-        setNewsPhotoFile(file);
-        setNewsPreviewUrl(URL.createObjectURL(file));
-      }
+      setImgWarning('');
+      setImgError(false);
+      setShowHelp(false);
   };
 
   const handleEditNews = (item: NewsItem) => {
       setCurrentNews(item);
-      setNewsPreviewUrl(item.imageUrl);
       setIsEditingNews(true);
+      setImgWarning('');
+      setImgError(false);
   };
 
   const handleDeleteNews = async (id: string) => {
@@ -166,7 +183,8 @@ export default function AdminPanel() {
   const handleNewsSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
       setSaving(true);
-      const success = await databaseService.saveNews(currentNews, newsPhotoFile);
+      // Pass null as file because we are using URL string
+      const success = await databaseService.saveNews(currentNews);
       if(success) {
           setSuccessMsg(currentNews.id ? 'Berita diperbarui!' : 'Berita ditambahkan!');
           setTimeout(() => setSuccessMsg(''), 3000);
@@ -261,13 +279,13 @@ export default function AdminPanel() {
             {/* Tabs */}
             <div className="flex px-6 gap-6">
                 <button 
-                    onClick={() => setActiveTab('principal')}
+                    onClick={() => { setActiveTab('principal'); setImgWarning(''); setImgError(false); }}
                     className={`pb-4 text-sm font-bold border-b-2 transition-all flex items-center gap-2 ${activeTab === 'principal' ? 'border-emerald-600 text-emerald-900' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
                 >
                     <UserIcon className="w-4 h-4"/> Profil Kepala Sekolah
                 </button>
                 <button 
-                    onClick={() => setActiveTab('news')}
+                    onClick={() => { setActiveTab('news'); setImgWarning(''); setImgError(false); }}
                     className={`pb-4 text-sm font-bold border-b-2 transition-all flex items-center gap-2 ${activeTab === 'news' ? 'border-emerald-600 text-emerald-900' : 'border-transparent text-slate-500 hover:text-slate-700'}`}
                 >
                     <NewspaperIcon className="w-4 h-4"/> Manajemen Berita
@@ -319,32 +337,64 @@ export default function AdminPanel() {
 
                 <div className="flex flex-col items-center">
                     <label className="block text-sm font-bold text-slate-700 mb-4 w-full">Foto Profil</label>
+                    
+                    {/* URL Input */}
+                    <div className="w-full mb-4">
+                        <div className="flex justify-between items-center mb-1">
+                             <span className="text-xs text-slate-500">Link URL Gambar</span>
+                             <button 
+                               type="button"
+                               onClick={() => setShowHelp(!showHelp)}
+                               className="text-xs text-emerald-600 font-bold hover:underline"
+                             >
+                               {showHelp ? 'Tutup Bantuan' : 'Cara ambil link?'}
+                             </button>
+                        </div>
+                        
+                        {showHelp && (
+                            <div className="mb-3 p-3 bg-indigo-50 text-indigo-900 text-xs rounded-lg border border-indigo-100 space-y-2 animate-fade-in-up">
+                                <p><strong className="text-indigo-700">Rekomendasi (Google Drive):</strong><br/>Upload foto ke Google Drive &rarr; Klik Kanan &rarr; Share &rarr; General Access: "Anyone with the link" &rarr; Copy Link &rarr; Tempel disini.</p>
+                                <p><strong className="text-indigo-700">Alternatif (Imgur):</strong><br/>Upload ke Imgur.com &rarr; Klik Kanan pada gambar &rarr; "Copy Image Address".</p>
+                                <p className="text-amber-700 bg-amber-50 p-1 rounded border border-amber-100 mt-1"><strong>⚠️ Penting:</strong> Jangan pakai link dari Google Photos yang mengandung <code>authuser</code> atau <code>lh3.googleusercontent</code> karena akan kadaluarsa.</p>
+                            </div>
+                        )}
+
+                        <input
+                            type="text"
+                            placeholder="https://drive.google.com/..."
+                            value={data.photoUrl}
+                            onChange={(e) => handleImageInput(e.target.value, 'principal')}
+                            className={`w-full px-4 py-3 rounded-lg bg-slate-50 border focus:outline-none focus:ring-2 text-sm ${imgWarning || imgError ? 'border-amber-400 focus:ring-amber-200' : 'border-slate-200 focus:ring-emerald-900/20'}`}
+                        />
+                         {imgWarning ? (
+                            <p className="text-xs text-amber-600 mt-2 font-bold bg-amber-50 p-2 rounded border border-amber-100 leading-tight">{imgWarning}</p>
+                        ) : null}
+                        {imgError && !imgWarning && (
+                            <p className="text-xs text-rose-600 mt-2 font-bold bg-rose-50 p-2 rounded border border-rose-100 leading-tight">Gagal memuat gambar. Pastikan link dapat diakses publik.</p>
+                        )}
+                    </div>
+
                     <div className="relative w-48 h-48 rounded-full bg-slate-100 border-4 border-white shadow-lg overflow-hidden mb-6 group">
-                    {previewUrl ? (
-                        <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                    {data.photoUrl && !imgError ? (
+                        <img 
+                            src={data.photoUrl} 
+                            alt="Preview" 
+                            className="w-full h-full object-cover" 
+                            onError={() => setImgError(true)}
+                        />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-300">
-                        <UserIcon className="w-16 h-16" />
+                        <div className="w-full h-full flex flex-col items-center justify-center text-slate-300 bg-slate-50">
+                           {imgError ? (
+                               <>
+                                <span className="text-2xl mb-1">⚠️</span>
+                                <span className="text-[10px] font-bold text-slate-500">Link Error</span>
+                               </>
+                           ) : (
+                               <UserIcon className="w-16 h-16" />
+                           )}
                         </div>
                     )}
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" onClick={() => document.getElementById('principal-upload')?.click()}>
-                        <span className="text-white font-bold text-sm">Ganti Foto</span>
                     </div>
-                    </div>
-                    <input
-                    id="principal-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePrincipalFileChange}
-                    className="hidden"
-                    />
-                    <button
-                    type="button"
-                    onClick={() => document.getElementById('principal-upload')?.click()}
-                    className="px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50"
-                    >
-                    Pilih Foto Baru
-                    </button>
                 </div>
                 </div>
 
@@ -438,27 +488,65 @@ export default function AdminPanel() {
                                </div>
 
                                <div className="space-y-4">
-                                   <label className="block text-xs font-bold text-slate-700 uppercase mb-1">Gambar Cover</label>
-                                   <div 
-                                      className="w-full aspect-video bg-white border-2 border-dashed border-slate-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition-colors overflow-hidden relative"
-                                      onClick={() => document.getElementById('news-upload')?.click()}
-                                   >
-                                       {newsPreviewUrl ? (
-                                           <img src={newsPreviewUrl} alt="Preview" className="w-full h-full object-cover" />
+                                   <div>
+                                       <div className="flex justify-between items-center mb-1">
+                                            <span className="block text-xs font-bold text-slate-700 uppercase">Link Gambar Cover (URL)</span>
+                                            <button 
+                                                type="button"
+                                                onClick={() => setShowHelp(!showHelp)}
+                                                className="text-xs text-emerald-600 font-bold hover:underline"
+                                            >
+                                                {showHelp ? 'Tutup Bantuan' : 'Cara ambil link?'}
+                                            </button>
+                                       </div>
+
+                                        {showHelp && (
+                                            <div className="mb-3 p-3 bg-indigo-50 text-indigo-900 text-xs rounded-lg border border-indigo-100 space-y-2 animate-fade-in-up">
+                                                <p><strong className="text-indigo-700">Rekomendasi (Google Drive):</strong><br/>Upload foto ke Google Drive &rarr; Klik Kanan &rarr; Share &rarr; General Access: "Anyone with the link" &rarr; Copy Link &rarr; Tempel disini.</p>
+                                                <p><strong className="text-indigo-700">Alternatif (Imgur):</strong><br/>Upload ke Imgur.com &rarr; Klik Kanan pada gambar &rarr; "Copy Image Address".</p>
+                                                <p className="text-amber-700 bg-amber-50 p-1 rounded border border-amber-100 mt-1"><strong>⚠️ Penting:</strong> Jangan pakai link dari Google Photos yang mengandung <code>authuser</code> atau <code>lh3.googleusercontent</code> karena akan kadaluarsa.</p>
+                                            </div>
+                                        )}
+
+                                       <input
+                                            type="text"
+                                            placeholder="https://drive.google.com/..."
+                                            value={currentNews.imageUrl}
+                                            onChange={(e) => handleImageInput(e.target.value, 'news')}
+                                            className={`w-full px-4 py-2 rounded-lg border focus:outline-none focus:ring-2 text-sm ${imgWarning || imgError ? 'border-amber-400 focus:ring-amber-200' : 'border-slate-200 focus:ring-emerald-900/20'}`}
+                                       />
+                                       {imgWarning && (
+                                           <p className="text-xs text-amber-600 mt-2 font-bold bg-amber-50 p-2 rounded border border-amber-100 leading-tight">{imgWarning}</p>
+                                       )}
+                                       {imgError && !imgWarning && (
+                                            <p className="text-xs text-rose-600 mt-2 font-bold bg-rose-50 p-2 rounded border border-rose-100 leading-tight">Gagal memuat gambar. Pastikan link dapat diakses publik.</p>
+                                       )}
+                                   </div>
+                                   
+                                   <div className="w-full aspect-video bg-white border border-slate-200 rounded-lg flex flex-col items-center justify-center overflow-hidden relative">
+                                       {currentNews.imageUrl && !imgError ? (
+                                           <img 
+                                            src={currentNews.imageUrl} 
+                                            alt="Preview" 
+                                            className="w-full h-full object-cover" 
+                                            onError={() => setImgError(true)}
+                                           />
                                        ) : (
-                                           <div className="text-center text-slate-400 p-4">
-                                               <NewspaperIcon className="w-8 h-8 mx-auto mb-2" />
-                                               <span className="text-xs">Klik untuk upload gambar</span>
+                                           <div className="text-center text-slate-300 p-4">
+                                               {imgError ? (
+                                                   <>
+                                                     <span className="text-2xl">⚠️</span>
+                                                     <p className="text-xs font-bold text-slate-400 mt-1">Gagal memuat gambar</p>
+                                                   </>
+                                               ) : (
+                                                   <>
+                                                     <NewspaperIcon className="w-8 h-8 mx-auto mb-2" />
+                                                     <span className="text-xs">Preview Gambar</span>
+                                                   </>
+                                               )}
                                            </div>
                                        )}
                                    </div>
-                                   <input 
-                                      id="news-upload" 
-                                      type="file" 
-                                      accept="image/*" 
-                                      onChange={handleNewsFileChange}
-                                      className="hidden" 
-                                   />
                                </div>
                            </div>
                            <div className="flex justify-end pt-4 border-t border-slate-200">
@@ -482,12 +570,20 @@ export default function AdminPanel() {
                           ) : (
                               newsList.map((item) => (
                                   <div key={item.id} className="flex flex-col md:flex-row gap-4 p-4 bg-white border border-slate-200 rounded-xl hover:shadow-md transition-shadow">
-                                      <div className="w-full md:w-32 h-24 bg-slate-100 rounded-lg overflow-hidden shrink-0">
+                                      <div className="w-full md:w-32 h-24 bg-slate-100 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
                                           {item.imageUrl ? (
-                                              <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" />
-                                          ) : (
-                                              <div className="w-full h-full flex items-center justify-center text-slate-300"><BookIcon className="w-8 h-8" /></div>
-                                          )}
+                                              <img 
+                                                src={item.imageUrl} 
+                                                alt={item.title} 
+                                                className="w-full h-full object-cover" 
+                                                onError={(e) => {
+                                                    e.currentTarget.style.display = 'none';
+                                                    e.currentTarget.parentElement?.classList.add('bg-slate-200');
+                                                }}
+                                              />
+                                          ) : null}
+                                          {/* Fallback Icon visible if img hidden or null */}
+                                          <BookIcon className={`w-8 h-8 text-slate-300 ${item.imageUrl ? 'absolute z-[-1]' : ''}`} />
                                       </div>
                                       <div className="flex-1">
                                           <div className="flex items-center gap-2 mb-1">

@@ -225,12 +225,18 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
                               alt={principal.name} 
                               className="w-full h-auto object-cover rounded-t-xl shadow-2xl z-10 relative transform hover:scale-[1.02] transition-transform duration-500" 
                               style={{ minHeight: '400px', maxHeight: '550px' }} 
+                              onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                  // Show fallback container logic below
+                                  const fallback = document.getElementById('principal-fallback');
+                                  if(fallback) fallback.style.display = 'flex';
+                              }}
                             />
-                         ) : (
-                            <div className="w-full h-[450px] bg-slate-800 rounded-t-xl flex items-center justify-center text-slate-600 border-b border-slate-700">
-                                <UserIcon className="w-32 h-32 opacity-50" />
-                            </div>
-                         )}
+                         ) : null}
+                         {/* Fallback displayed if no photo OR if photo errors (handled by hiding img) */}
+                         <div id="principal-fallback" className="w-full h-[450px] bg-slate-800 rounded-t-xl flex items-center justify-center text-slate-600 border-b border-slate-700" style={{display: principal.photoUrl ? 'none' : 'flex'}}>
+                            <UserIcon className="w-32 h-32 opacity-50" />
+                        </div>
                     </div>
 
                     {/* Name Plate */}
@@ -308,14 +314,30 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
                 </div>
             ) : (
                 news.slice(0, 3).map((item) => (
-                <div key={item.id} className="group bg-white rounded-2xl overflow-hidden border border-slate-100 hover:border-emerald-200 shadow-sm hover:shadow-2xl hover:shadow-emerald-900/10 transition-all duration-500 hover:-translate-y-2 flex flex-col h-full">
+                <a 
+                    key={item.id} 
+                    href={`?news_id=${item.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group bg-white rounded-2xl overflow-hidden border border-slate-100 hover:border-emerald-200 shadow-sm hover:shadow-2xl hover:shadow-emerald-900/10 transition-all duration-500 hover:-translate-y-2 flex flex-col h-full cursor-pointer"
+                >
                     <div className="h-52 bg-slate-100 w-full flex items-center justify-center text-slate-300 group-hover:bg-slate-50 transition-colors relative overflow-hidden shrink-0">
                         {item.imageUrl ? (
-                            <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                        ) : (
-                            <BookIcon className="w-16 h-16 group-hover:scale-110 transition-transform duration-500 text-slate-300 group-hover:text-emerald-200" />
-                        )}
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <img 
+                                src={item.imageUrl} 
+                                alt={item.title} 
+                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                }}
+                            />
+                        ) : null}
+                        {/* Always render fallback icon, hide if img loads (handled by z-index or absolute if needed, but here simple stacking works if img hidden) */}
+                        <BookIcon className={`w-16 h-16 group-hover:scale-110 transition-transform duration-500 text-slate-300 group-hover:text-emerald-200 absolute z-0`} />
+                        {/* Overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-10"></div>
+                        {/* Image covers icon if loaded because it is later in DOM or has higher Z? No, we need img to have z-10. */}
+                        {item.imageUrl && <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover z-10 transition-transform duration-700 group-hover:scale-110" onError={(e) => e.currentTarget.style.display = 'none'} />}
                     </div>
                     <div className="p-7 flex flex-col flex-1">
                         <div className="flex items-center gap-3 mb-4">
@@ -330,16 +352,13 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
                         <p className="text-sm text-slate-500 line-clamp-3 mb-6 leading-relaxed flex-1">
                             {item.content}
                         </p>
-                        <a 
-                          href={`?news_id=${item.id}`} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
+                        <span 
                           className="text-sm font-bold text-emerald-700 flex items-center gap-2 group-hover:gap-3 transition-all mt-auto"
                         >
                             Baca Selengkapnya <ArrowRightIcon className="w-4 h-4" />
-                        </a>
+                        </span>
                     </div>
-                </div>
+                </a>
                 ))
             )}
             </div>
@@ -369,7 +388,7 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
 
             <div className="w-full h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent mb-8 max-w-2xl mx-auto"></div>
 
-            <p className="text-slate-500 text-sm">&copy; 2026 SMKS Mathalul Anwar Buaranjati. All Rights Reserved.</p>
+            <p className="text-slate-500 text-sm">&copy; 2026 SMKS Mathlaul Anwar Buaranjati. All Rights Reserved.</p>
           </div>
        </footer>
     </div>

@@ -77,14 +77,18 @@ export default function NewsDetail({ id }: NewsDetailProps) {
           </h1>
 
           {/* Featured Image */}
-          <div className="w-full aspect-video bg-slate-100 rounded-2xl overflow-hidden mb-10 shadow-lg">
-             {news.imageUrl ? (
-                <img src={news.imageUrl} alt={news.title} className="w-full h-full object-cover" />
-             ) : (
-                <div className="w-full h-full flex items-center justify-center text-slate-300">
-                   <BookIcon className="w-20 h-20" />
-                </div>
+          <div className="w-full aspect-video bg-slate-100 rounded-2xl overflow-hidden mb-10 shadow-lg relative flex items-center justify-center">
+             {news.imageUrl && (
+                <img 
+                  src={news.imageUrl} 
+                  alt={news.title} 
+                  className="w-full h-full object-cover absolute inset-0 z-10" 
+                  onError={(e) => e.currentTarget.style.display = 'none'}
+                />
              )}
+             <div className="text-slate-300 z-0">
+                <BookIcon className="w-20 h-20" />
+             </div>
           </div>
 
           {/* Content */}

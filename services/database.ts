@@ -1,6 +1,5 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc, getDocs, query, orderBy, Timestamp, doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { PrincipalData, NewsItem } from '../types';
 
 export interface Registrant {
@@ -30,13 +29,11 @@ const firebaseConfig = {
 
 // Inisialisasi Firebase
 let db: any;
-let storage: any;
 let isFirebaseInitialized = false;
 
 try {
   const app = initializeApp(firebaseConfig);
   db = getFirestore(app);
-  storage = getStorage(app);
   isFirebaseInitialized = true;
   console.log("Firebase initialized successfully");
 } catch (error) {
@@ -51,52 +48,6 @@ const PRINCIPAL_DOC_ID = 'principal_data';
 const LOCAL_STORAGE_REGISTRANTS_KEY = 'ppdb_registrants_local';
 const LOCAL_STORAGE_PRINCIPAL_KEY = 'principal_data_local';
 const LOCAL_STORAGE_NEWS_KEY = 'school_news_local';
-
-// Helper: Compress Image to prevent Database Size Limits (Max 1MB for Firestore)
-const compressImage = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 800; // Resize to standard web width
-        const MAX_HEIGHT = 800;
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
-          }
-        } else {
-          if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
-            height = MAX_HEIGHT;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-            ctx.drawImage(img, 0, 0, width, height);
-            // Compress to JPEG with 0.7 quality to ensure small size
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-            resolve(dataUrl);
-        } else {
-            reject(new Error("Canvas context failed"));
-        }
-      };
-      img.onerror = (err) => reject(err);
-    };
-    reader.onerror = (error) => reject(error);
-  });
-};
 
 export const databaseService = {
   // --- PPDB ---
@@ -224,44 +175,6 @@ export const databaseService = {
     }
   },
 
-  uploadPrincipalPhoto: async (file: File): Promise<string | null> => {
-    // 1. COMPRESS IMAGE FIRST
-    // This is crucial. If Firebase Storage fails (due to permissions), 
-    // we need a small base64 string that fits into the Database (Firestore/Local).
-    // Raw camera photos are too big (5MB+) and will cause the database save to fail.
-    let compressedBase64: string | null = null;
-    try {
-        compressedBase64 = await compressImage(file);
-    } catch (e) {
-        console.error("Image compression failed:", e);
-        // Continue but it might fail later if too big
-    }
-
-    // 2. Try Firebase Storage (Preferred)
-    if (isFirebaseInitialized && storage) {
-      try {
-        const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`;
-        const storageRef = ref(storage, `principal-photos/${fileName}`);
-        
-        const metadata = { contentType: file.type };
-        // Try uploading the original file
-        const snapshot = await uploadBytes(storageRef, file, metadata);
-        const downloadURL = await getDownloadURL(snapshot.ref);
-        console.log("Image uploaded to Firebase Storage:", downloadURL);
-        return downloadURL;
-      } catch (e) {
-        console.warn("Firebase Storage Upload Failed. Reason:", e);
-        console.warn("Falling back to Base64 storage. Check 'Storage Rules' in Firebase Console if you want to fix this.");
-      }
-    } else {
-        console.warn("Firebase Storage not initialized. Using Base64 fallback.");
-    }
-
-    // 3. Fallback: Return Compressed Base64
-    // This allows the image to be saved directly in the 'text' fields of the database
-    return compressedBase64;
-  },
-
   // --- BERITA / NEWS ---
   getNews: async (): Promise<NewsItem[]> => {
     let firebaseResults: NewsItem[] = [];
@@ -335,18 +248,9 @@ export const databaseService = {
     }
   },
 
-  saveNews: async (news: NewsItem, file?: File | null): Promise<boolean> => {
-    let finalImageUrl = news.imageUrl;
-
-    // 1. Upload Image if exists (uses new compression logic)
-    if (file) {
-       const url = await databaseService.uploadPrincipalPhoto(file); 
-       if (url) finalImageUrl = url;
-    }
-
+  saveNews: async (news: NewsItem): Promise<boolean> => {
     const newsData = {
         ...news,
-        imageUrl: finalImageUrl,
         timestamp: Timestamp.now()
     };
 

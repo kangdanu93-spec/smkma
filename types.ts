@@ -1,3 +1,4 @@
+
 export enum PortalMode {
   HOME = 'HOME',
   MAPS = 'MAPS',
@@ -45,4 +46,14 @@ export interface PrincipalData {
   title: string;
   message: string;
   photoUrl: string;
+}
+
+export interface NewsItem {
+  id: string;
+  title: string;
+  content: string;
+  date: string;
+  category: string; // 'NEWS', 'EVENT', 'PRESTASI'
+  imageUrl: string;
+  timestamp?: any;
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { PortalMode } from './types';
 import { HomeIcon, BuildingIcon, BriefcaseIcon, GraduationCapIcon, ClipboardIcon, CheckBadgeIcon, ArrowRightIcon, LockIcon } from './components/ui/Icons';
 import LiveInterface from './components/LiveInterface';
@@ -6,9 +6,25 @@ import ChatInterface from './components/ChatInterface';
 import SchoolDashboard from './components/SchoolDashboard';
 import SimpleContent from './components/SimpleContent';
 import AdminPanel from './components/AdminPanel';
+import NewsDetail from './components/NewsDetail';
 
 export default function App() {
   const [currentMode, setCurrentMode] = useState<PortalMode>(PortalMode.HOME);
+  const [newsId, setNewsId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Check for news_id in URL params on load
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('news_id');
+    if (id) {
+      setNewsId(id);
+    }
+  }, []);
+
+  // If viewing a specific news item, render only NewsDetail
+  if (newsId) {
+    return <NewsDetail id={newsId} />;
+  }
 
   return (
     <div className="h-screen w-full flex flex-col bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 text-slate-900 font-sans selection:bg-emerald-200 selection:text-emerald-900">

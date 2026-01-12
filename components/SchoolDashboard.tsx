@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { PortalMode, PrincipalData } from '../types';
+import { PortalMode, PrincipalData, NewsItem } from '../types';
 import { databaseService } from '../services/database';
-import { ArrowRightIcon, BrainIcon, MapIcon, MicIcon, BookIcon, UserIcon, CheckBadgeIcon, FacebookIcon, InstagramIcon, YoutubeIcon, TiktokIcon } from './ui/Icons';
+import { ArrowRightIcon, BrainIcon, MapIcon, MicIcon, BookIcon, UserIcon, CheckBadgeIcon, FacebookIcon, InstagramIcon, YoutubeIcon, TiktokIcon, LoaderIcon } from './ui/Icons';
 
 interface SchoolDashboardProps {
   onNavigate: (mode: PortalMode) => void;
@@ -15,14 +15,21 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
     photoUrl: ''
   });
 
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [loadingNews, setLoadingNews] = useState(true);
+
   useEffect(() => {
-    const fetchPrincipal = async () => {
-      const data = await databaseService.getPrincipalData();
-      if (data) {
-        setPrincipal(data);
-      }
+    const fetchData = async () => {
+      // Fetch Principal
+      const pData = await databaseService.getPrincipalData();
+      if (pData) setPrincipal(pData);
+
+      // Fetch News
+      const nData = await databaseService.getNews();
+      setNews(nData);
+      setLoadingNews(false);
     };
-    fetchPrincipal();
+    fetchData();
   }, []);
 
   return (
@@ -288,33 +295,55 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
              Arsip Berita <ArrowRightIcon className="w-4 h-4" />
            </button>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-           {[1, 2, 3].map((i) => (
-             <div key={i} className="group bg-white rounded-2xl overflow-hidden border border-slate-100 hover:border-emerald-200 shadow-sm hover:shadow-2xl hover:shadow-emerald-900/10 transition-all duration-500 hover:-translate-y-2">
-                <div className="h-52 bg-slate-100 w-full flex items-center justify-center text-slate-300 group-hover:bg-slate-50 transition-colors relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <BookIcon className="w-16 h-16 group-hover:scale-110 transition-transform duration-500 text-slate-300 group-hover:text-emerald-200" />
-                </div>
-                <div className="p-7">
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="text-[10px] font-bold text-white bg-emerald-900 px-2.5 py-1 rounded shadow-md shadow-emerald-900/20">NEWS</span>
-                    <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span> 10 Feb 2025
-                    </span>
-                  </div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-3 line-clamp-2 leading-tight group-hover:text-emerald-800 transition-colors">
-                    Kunjungan Industri Siswa ke Kawasan Bisnis Jakarta
-                  </h3>
-                  <p className="text-sm text-slate-500 line-clamp-3 mb-6 leading-relaxed">
-                    Siswa melihat langsung proses profesional di dunia industri, mempelajari standar kerja, dan budaya perusahaan...
-                  </p>
-                  <span className="text-sm font-bold text-emerald-700 flex items-center gap-2 group-hover:gap-3 transition-all">
-                    Baca Selengkapnya <ArrowRightIcon className="w-4 h-4" />
-                  </span>
-                </div>
+        
+        {loadingNews ? (
+             <div className="flex justify-center items-center py-20 text-emerald-900">
+                <LoaderIcon className="w-10 h-10 animate-spin" />
              </div>
-           ))}
-        </div>
+        ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {news.length === 0 ? (
+                <div className="col-span-3 text-center py-10 bg-slate-50 rounded-xl border border-dashed border-slate-300 text-slate-500">
+                    Belum ada berita terbaru saat ini.
+                </div>
+            ) : (
+                news.slice(0, 3).map((item) => (
+                <div key={item.id} className="group bg-white rounded-2xl overflow-hidden border border-slate-100 hover:border-emerald-200 shadow-sm hover:shadow-2xl hover:shadow-emerald-900/10 transition-all duration-500 hover:-translate-y-2 flex flex-col h-full">
+                    <div className="h-52 bg-slate-100 w-full flex items-center justify-center text-slate-300 group-hover:bg-slate-50 transition-colors relative overflow-hidden shrink-0">
+                        {item.imageUrl ? (
+                            <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                        ) : (
+                            <BookIcon className="w-16 h-16 group-hover:scale-110 transition-transform duration-500 text-slate-300 group-hover:text-emerald-200" />
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    </div>
+                    <div className="p-7 flex flex-col flex-1">
+                        <div className="flex items-center gap-3 mb-4">
+                            <span className="text-[10px] font-bold text-white bg-emerald-900 px-2.5 py-1 rounded shadow-md shadow-emerald-900/20 uppercase">{item.category}</span>
+                            <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span> {new Date(item.date).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'})}
+                            </span>
+                        </div>
+                        <h3 className="text-xl font-bold text-slate-900 mb-3 line-clamp-2 leading-tight group-hover:text-emerald-800 transition-colors">
+                            {item.title}
+                        </h3>
+                        <p className="text-sm text-slate-500 line-clamp-3 mb-6 leading-relaxed flex-1">
+                            {item.content}
+                        </p>
+                        <a 
+                          href={`?news_id=${item.id}`} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-sm font-bold text-emerald-700 flex items-center gap-2 group-hover:gap-3 transition-all mt-auto"
+                        >
+                            Baca Selengkapnya <ArrowRightIcon className="w-4 h-4" />
+                        </a>
+                    </div>
+                </div>
+                ))
+            )}
+            </div>
+        )}
        </section>
 
        <footer className="py-12 bg-slate-900 text-center text-white relative overflow-hidden border-t border-slate-800">

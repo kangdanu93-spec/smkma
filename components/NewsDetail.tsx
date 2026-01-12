@@ -104,10 +104,11 @@ export default function NewsDetail({ id }: NewsDetailProps) {
              </div>
           </div>
 
-          {/* Content */}
-          <div className="prose prose-lg prose-slate max-w-none text-slate-700 leading-relaxed whitespace-pre-line">
-             {news.content}
-          </div>
+          {/* Content - Rendered as HTML */}
+          <div 
+            className="prose prose-lg prose-slate max-w-none text-slate-700 leading-relaxed"
+            dangerouslySetInnerHTML={{ __html: news.content }}
+          />
 
           <div className="mt-16 pt-8 border-t border-slate-100">
              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">Bagikan Berita Ini</h3>

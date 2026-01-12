@@ -317,7 +317,7 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
                     rel="noopener noreferrer"
                     className="group bg-white rounded-2xl overflow-hidden border border-slate-100 hover:border-emerald-200 shadow-sm hover:shadow-2xl hover:shadow-emerald-900/10 transition-all duration-500 hover:-translate-y-2 flex flex-col h-full cursor-pointer"
                 >
-                    <div className="h-52 bg-slate-100 w-full flex items-center justify-center text-slate-300 group-hover:bg-slate-50 transition-colors relative overflow-hidden shrink-0">
+                    <div className="h-56 bg-slate-100 w-full flex items-center justify-center text-slate-300 group-hover:bg-slate-50 transition-colors relative overflow-hidden shrink-0">
                         {item.imageUrl ? (
                             <img 
                                 src={item.imageUrl} 
@@ -329,27 +329,38 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
                             />
                         ) : null}
                         <BookIcon className={`w-16 h-16 group-hover:scale-110 transition-transform duration-500 text-slate-300 group-hover:text-emerald-200 absolute z-0`} />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-10"></div>
-                        {item.imageUrl && <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover z-10 transition-transform duration-700 group-hover:scale-110" onError={(e) => e.currentTarget.style.display = 'none'} />}
-                    </div>
-                    <div className="p-7 flex flex-col flex-1">
-                        <div className="flex items-center gap-3 mb-4">
-                            <span className="text-[10px] font-bold text-white bg-emerald-900 px-2.5 py-1 rounded shadow-md shadow-emerald-900/20 uppercase">{item.category}</span>
-                            <span className="text-xs font-medium text-slate-500 flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-slate-300"></span> {new Date(item.date).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', year: 'numeric'})}
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity z-10"></div>
+                        
+                        {/* Category Badge Floating on Image */}
+                        <div className="absolute top-4 left-4 z-20">
+                            <span className="px-3 py-1 bg-white/90 backdrop-blur-md text-emerald-900 text-[10px] font-bold uppercase tracking-wider rounded-full shadow-lg border border-white/50">
+                                {item.category}
                             </span>
                         </div>
-                        <h3 className="text-xl font-bold text-slate-900 mb-3 line-clamp-2 leading-tight group-hover:text-emerald-800 transition-colors">
+                    </div>
+                    
+                    <div className="p-6 flex flex-col flex-1">
+                         <div className="flex items-center gap-2 mb-3 text-xs text-slate-400 font-medium">
+                            <span className="flex items-center gap-1.5">
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                                {new Date(item.date).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}
+                            </span>
+                         </div>
+
+                        {/* Title - FULL */}
+                        <h3 className="text-xl font-bold text-slate-900 mb-3 leading-snug group-hover:text-emerald-700 transition-colors">
                             {item.title}
                         </h3>
+                        
                         <p className="text-sm text-slate-500 line-clamp-3 mb-6 leading-relaxed flex-1">
-                            {item.content}
+                            {item.content.replace(/<[^>]+>/g, '')}
                         </p>
-                        <span 
-                          className="text-sm font-bold text-emerald-700 flex items-center gap-2 group-hover:gap-3 transition-all mt-auto"
-                        >
-                            Baca Selengkapnya <ArrowRightIcon className="w-4 h-4" />
-                        </span>
+                        
+                        <div className="pt-4 border-t border-slate-100 mt-auto flex justify-between items-center">
+                            <span className="text-sm font-bold text-emerald-700 flex items-center gap-2 group-hover:gap-3 transition-all">
+                                Baca Selengkapnya <ArrowRightIcon className="w-4 h-4" />
+                            </span>
+                        </div>
                     </div>
                 </a>
                 ))

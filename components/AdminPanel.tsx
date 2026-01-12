@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { databaseService } from '../services/database';
 import { PrincipalData, NewsItem, MajorItem } from '../types';
-import { UserIcon, CheckBadgeIcon, LoaderIcon, LockIcon, LogOutIcon, NewspaperIcon, PlusIcon, EditIcon, TrashIcon, XIcon, BookIcon, GraduationCapIcon, BuildingIcon } from './ui/Icons';
+import { UserIcon, CheckBadgeIcon, LoaderIcon, LockIcon, LogOutIcon, NewspaperIcon, PlusIcon, EditIcon, TrashIcon, XIcon, BookIcon, GraduationCapIcon, BuildingIcon, BoldIcon, ItalicIcon, UnderlineIcon, ListIcon, ListOrderedIcon } from './ui/Icons';
 
 // Helper to clean up URLs
 const processImageUrl = (url: string) => {
@@ -13,6 +13,87 @@ const processImageUrl = (url: string) => {
       }
   }
   return url;
+};
+
+// --- RICH TEXT EDITOR COMPONENT ---
+interface RichTextEditorProps {
+    value: string;
+    onChange: (value: string) => void;
+    placeholder?: string;
+}
+
+const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeholder }) => {
+    const editorRef = useRef<HTMLDivElement>(null);
+    const [isFocused, setIsFocused] = useState(false);
+
+    // Initialize content
+    useEffect(() => {
+        if (editorRef.current && value !== editorRef.current.innerHTML) {
+            // Only update if significantly different to prevent cursor jumping
+            // A simple check is usually enough for this basic usage
+             if (editorRef.current.innerText.trim() === '' && value === '') {
+                 editorRef.current.innerHTML = '';
+             } else if (value && editorRef.current.innerHTML === '') {
+                 editorRef.current.innerHTML = value;
+             }
+        }
+    }, []); // Run once on mount
+
+    const execCmd = (command: string, value: string | undefined = undefined) => {
+        document.execCommand(command, false, value);
+        if (editorRef.current) {
+            onChange(editorRef.current.innerHTML);
+            // Focusing back is generally handled by keeping selection via preventDefault on mousedown
+            // editorRef.current.focus(); 
+        }
+    };
+
+    const handleInput = () => {
+        if (editorRef.current) {
+            onChange(editorRef.current.innerHTML);
+        }
+    };
+
+    return (
+        <div className={`w-full rounded-lg border overflow-hidden bg-white transition-all ${isFocused ? 'border-emerald-500 ring-2 ring-emerald-900/10' : 'border-slate-200'}`}>
+            {/* Toolbar */}
+            <div className="flex items-center gap-1 p-2 border-b border-slate-100 bg-slate-50">
+                <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execCmd('bold')} className="p-2 text-slate-600 hover:text-emerald-700 hover:bg-emerald-100 rounded transition-colors" title="Bold">
+                    <BoldIcon className="w-4 h-4" />
+                </button>
+                <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execCmd('italic')} className="p-2 text-slate-600 hover:text-emerald-700 hover:bg-emerald-100 rounded transition-colors" title="Italic">
+                    <ItalicIcon className="w-4 h-4" />
+                </button>
+                <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execCmd('underline')} className="p-2 text-slate-600 hover:text-emerald-700 hover:bg-emerald-100 rounded transition-colors" title="Underline">
+                    <UnderlineIcon className="w-4 h-4" />
+                </button>
+                <div className="w-px h-6 bg-slate-300 mx-1"></div>
+                <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execCmd('insertUnorderedList')} className="p-2 text-slate-600 hover:text-emerald-700 hover:bg-emerald-100 rounded transition-colors" title="Bullet List">
+                    <ListIcon className="w-4 h-4" />
+                </button>
+                <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={() => execCmd('insertOrderedList')} className="p-2 text-slate-600 hover:text-emerald-700 hover:bg-emerald-100 rounded transition-colors" title="Numbered List">
+                    <ListOrderedIcon className="w-4 h-4" />
+                </button>
+            </div>
+            
+            {/* Editable Area */}
+            <div 
+                ref={editorRef}
+                contentEditable
+                onInput={handleInput}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                className="w-full p-4 min-h-[200px] outline-none prose prose-sm max-w-none text-slate-700 overflow-y-auto [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5"
+                style={{ minHeight: '200px' }}
+                dangerouslySetInnerHTML={{ __html: value }}
+            />
+            {(!value || value === '<br>') && (
+                <div className="absolute top-[52px] left-4 text-slate-300 pointer-events-none text-sm">
+                    {placeholder}
+                </div>
+            )}
+        </div>
+    );
 };
 
 export default function AdminPanel() {
@@ -420,7 +501,17 @@ export default function AdminPanel() {
                                        </select>
                                        <input type="date" required value={currentNews.date} onChange={(e) => setCurrentNews({...currentNews, date: e.target.value})} className="w-full px-4 py-2 rounded-lg border border-slate-200" />
                                    </div>
-                                   <textarea rows={6} required placeholder="Konten Berita" value={currentNews.content} onChange={(e) => setCurrentNews({...currentNews, content: e.target.value})} className="w-full px-4 py-2 rounded-lg border border-slate-200" />
+                                   
+                                   {/* Rich Text Editor Replacement */}
+                                   <div className="space-y-1">
+                                       <label className="block text-xs font-bold text-slate-500 uppercase">Konten Berita</label>
+                                       <RichTextEditor 
+                                           value={currentNews.content} 
+                                           onChange={(val) => setCurrentNews({...currentNews, content: val})} 
+                                           placeholder="Tulis konten berita di sini..."
+                                       />
+                                   </div>
+
                                </div>
                                <div className="space-y-4">
                                    <input type="text" placeholder="Link Gambar Cover (URL)" value={currentNews.imageUrl} onChange={(e) => handleImageInput(e.target.value, 'news')} className="w-full px-4 py-2 rounded-lg border border-slate-200 text-sm" />
@@ -436,17 +527,21 @@ export default function AdminPanel() {
                   ) : (
                       <div className="grid grid-cols-1 gap-4">
                           {newsList.map((item) => (
-                                  <div key={item.id} className="flex flex-col md:flex-row gap-4 p-4 bg-white border border-slate-200 rounded-xl hover:shadow-md transition-shadow">
-                                      <div className="w-full md:w-32 h-24 bg-slate-100 rounded-lg overflow-hidden shrink-0 flex items-center justify-center">
-                                          {item.imageUrl ? <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" /> : <BookIcon className="w-8 h-8 text-slate-300" />}
+                                  <div key={item.id} className="flex flex-col md:flex-row gap-6 p-5 bg-white border border-slate-200 rounded-xl hover:shadow-lg transition-all group">
+                                      <div className="w-full md:w-48 h-32 bg-slate-100 rounded-lg overflow-hidden shrink-0 relative">
+                                          {item.imageUrl ? <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-slate-300"><BookIcon className="w-8 h-8" /></div>}
+                                           <div className="absolute top-2 left-2 px-2 py-0.5 bg-white/90 backdrop-blur text-[10px] font-bold uppercase rounded-full text-slate-800 shadow-sm border border-slate-100">{item.category}</div>
                                       </div>
-                                      <div className="flex-1">
-                                          <h4 className="font-bold text-slate-900 text-lg mb-1">{item.title}</h4>
-                                          <p className="text-sm text-slate-500 line-clamp-2">{item.content}</p>
-                                      </div>
-                                      <div className="flex gap-2 justify-end">
-                                          <button onClick={() => handleEditNews(item)} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg"><EditIcon className="w-5 h-5" /></button>
-                                          <button onClick={() => handleDeleteNews(item.id)} className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg"><TrashIcon className="w-5 h-5" /></button>
+                                      <div className="flex-1 flex flex-col">
+                                          <div className="flex justify-between items-start">
+                                              <h4 className="font-bold text-slate-900 text-lg mb-2 leading-snug">{item.title}</h4>
+                                              <div className="flex gap-2 shrink-0 ml-4">
+                                                  <button onClick={() => handleEditNews(item)} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Edit"><EditIcon className="w-5 h-5" /></button>
+                                                  <button onClick={() => handleDeleteNews(item.id)} className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Hapus"><TrashIcon className="w-5 h-5" /></button>
+                                              </div>
+                                          </div>
+                                          <p className="text-xs text-slate-400 mb-2 font-medium">{new Date(item.date).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}</p>
+                                          <p className="text-sm text-slate-500 line-clamp-2">{item.content.replace(/<[^>]+>/g, '')}</p>
                                       </div>
                                   </div>
                               ))}

@@ -322,17 +322,19 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
                             <img 
                                 src={item.imageUrl} 
                                 alt={item.title} 
-                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 relative z-10" 
                                 onError={(e) => {
                                     e.currentTarget.style.display = 'none';
                                 }}
                             />
-                        ) : null}
-                        <BookIcon className={`w-16 h-16 group-hover:scale-110 transition-transform duration-500 text-slate-300 group-hover:text-emerald-200 absolute z-0`} />
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity z-10"></div>
+                        ) : (
+                             <BookIcon className="w-16 h-16 text-slate-300 group-hover:text-emerald-200 group-hover:scale-110 transition-all duration-500" />
+                        )}
+                        
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity z-20"></div>
                         
                         {/* Category Badge Floating on Image */}
-                        <div className="absolute top-4 left-4 z-20">
+                        <div className="absolute top-4 left-4 z-30">
                             <span className="px-3 py-1 bg-white/90 backdrop-blur-md text-emerald-900 text-[10px] font-bold uppercase tracking-wider rounded-full shadow-lg border border-white/50">
                                 {item.category}
                             </span>

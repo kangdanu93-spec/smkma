@@ -44,7 +44,7 @@ export default function App() {
     { mode: PortalMode.MAJORS, icon: GraduationCapIcon, label: "Jurusan" },
     { mode: PortalMode.BKK, icon: BriefcaseIcon, label: "BKK" },
     { mode: PortalMode.PPDB, icon: ClipboardIcon, label: "PPDB", special: "emerald" },
-    { mode: PortalMode.UKOM, icon: CheckBadgeIcon, label: "UKOM", special: "amber" },
+    { mode: PortalMode.UKOM, icon: CheckBadgeIcon, label: "UKOM", special: "amber", externalUrl: "https://pendaftaran-ukom-lemon.vercel.app/" },
     { mode: PortalMode.ADMIN, icon: LockIcon, label: "Admin" },
   ];
 
@@ -78,6 +78,30 @@ export default function App() {
              
              // Dynamic Class Logic
              let baseClass = "flex items-center justify-center gap-2 px-3 py-2 md:px-4 md:py-2 rounded-full text-sm font-bold transition-all duration-300 shrink-0";
+             
+             // External Link Handling (UKOM)
+             if ((item as any).externalUrl) {
+                // For UKOM/Amber, make it look active/highlighted to serve as CTA
+                const externalClass = item.special === 'amber'
+                   ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg shadow-amber-600/20 scale-100 hover:scale-105 hover:shadow-amber-600/30"
+                   : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 scale-95 hover:scale-100";
+
+                return (
+                  <a
+                    key={item.mode}
+                    href={(item as any).externalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`${baseClass} ${externalClass}`}
+                    title={item.label}
+                  >
+                    <item.icon className="w-5 h-5" />
+                    <span className="hidden md:inline">{item.label}</span>
+                  </a>
+                );
+             }
+
+             // Internal Navigation
              let activeClass = "";
              let inactiveClass = "text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 scale-95 hover:scale-100";
 
@@ -131,38 +155,6 @@ export default function App() {
         {(currentMode === PortalMode.PROFILE || currentMode === PortalMode.MAJORS || currentMode === PortalMode.BKK || currentMode === PortalMode.PPDB) && (
            <div className="w-full h-full animate-fade-in-up">
               <SimpleContent mode={currentMode} />
-           </div>
-        )}
-
-        {currentMode === PortalMode.UKOM && (
-           <div className="w-full h-full p-4 md:p-8 flex flex-col animate-fade-in-up">
-             <div className="flex-1 bg-white rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden relative flex flex-col">
-               <div className="bg-slate-50 px-6 py-3 border-b border-slate-200 flex justify-between items-center">
-                  <div className="flex items-center gap-3">
-                     <div className="p-2 bg-amber-100 rounded-lg text-amber-700 animate-pulse">
-                        <CheckBadgeIcon className="w-5 h-5" />
-                     </div>
-                     <div>
-                       <h3 className="font-bold text-slate-900">Aplikasi Pendaftaran UKOM</h3>
-                       <p className="text-xs text-slate-500">Portal Eksternal Terintegrasi</p>
-                     </div>
-                  </div>
-                  <a 
-                    href="https://pendaftaran-ukom-lemon.vercel.app/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-slate-900 bg-white px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors hover:shadow-sm"
-                  >
-                    Buka di Tab Baru <ArrowRightIcon className="w-3 h-3" />
-                  </a>
-               </div>
-               <iframe 
-                 src="https://pendaftaran-ukom-lemon.vercel.app/" 
-                 className="w-full flex-1 border-0"
-                 title="Pendaftaran UKOM"
-                 allow="camera; microphone; geolocation"
-               />
-             </div>
            </div>
         )}
       </main>

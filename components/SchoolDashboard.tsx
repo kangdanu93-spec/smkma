@@ -175,9 +175,9 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
             </div>
           </div>
 
-          {/* UKOM Card */}
+          {/* UKOM Card - UPDATED TO EXTERNAL LINK */}
           <div 
-            onClick={() => onNavigate(PortalMode.UKOM)}
+            onClick={() => window.open('https://pendaftaran-ukom-lemon.vercel.app/', '_blank')}
             className="group glass-panel rounded-2xl p-6 cursor-pointer hover:-translate-y-2 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-900/10 animate-fade-in-up delay-300 relative overflow-hidden border-amber-100/50"
           >
             <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-bl-[60px] transition-transform group-hover:scale-110"></div>

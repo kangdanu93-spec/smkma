@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { PortalMode, PrincipalData, NewsItem } from '../types';
+import { PortalMode, PrincipalData, NewsItem, MajorItem } from '../types';
 import { databaseService } from '../services/database';
-import { ArrowRightIcon, BrainIcon, MapIcon, MicIcon, BookIcon, UserIcon, CheckBadgeIcon, FacebookIcon, InstagramIcon, YoutubeIcon, TiktokIcon, LoaderIcon } from './ui/Icons';
+import { ArrowRightIcon, BrainIcon, MapIcon, MicIcon, BookIcon, UserIcon, CheckBadgeIcon, FacebookIcon, InstagramIcon, YoutubeIcon, TiktokIcon, LoaderIcon, PaletteIcon, WrenchIcon, BuildingIcon } from './ui/Icons';
 
 interface SchoolDashboardProps {
   onNavigate: (mode: PortalMode) => void;
@@ -16,6 +16,7 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
   });
 
   const [news, setNews] = useState<NewsItem[]>([]);
+  const [majors, setMajors] = useState<MajorItem[]>([]);
   const [loadingNews, setLoadingNews] = useState(true);
 
   useEffect(() => {
@@ -27,10 +28,34 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
       // Fetch News
       const nData = await databaseService.getNews();
       setNews(nData);
+      
+      // Fetch Majors
+      const mData = await databaseService.getMajors();
+      setMajors(mData);
+      
       setLoadingNews(false);
     };
     fetchData();
   }, []);
+
+  // Helper for Theme Colors
+  const getThemeColors = (theme: string) => {
+      switch(theme) {
+          case 'orange': return { bg: 'from-orange-500 to-amber-500', shadow: 'shadow-orange-500/20', text: 'text-orange-600', border: 'hover:border-orange-500/30', blur: 'bg-orange-100/30' };
+          case 'blue': return { bg: 'from-blue-600 to-indigo-600', shadow: 'shadow-blue-600/20', text: 'text-blue-700', border: 'hover:border-blue-500/30', blur: 'bg-blue-100/30' };
+          case 'purple': return { bg: 'from-purple-600 to-fuchsia-600', shadow: 'shadow-purple-600/20', text: 'text-purple-700', border: 'hover:border-purple-500/30', blur: 'bg-purple-100/30' };
+          case 'emerald': return { bg: 'from-emerald-600 to-teal-600', shadow: 'shadow-emerald-600/20', text: 'text-emerald-700', border: 'hover:border-emerald-500/30', blur: 'bg-emerald-100/30' };
+          case 'rose': return { bg: 'from-rose-600 to-pink-600', shadow: 'shadow-rose-600/20', text: 'text-rose-700', border: 'hover:border-rose-500/30', blur: 'bg-rose-100/30' };
+          default: return { bg: 'from-slate-700 to-slate-900', shadow: 'shadow-slate-600/20', text: 'text-slate-700', border: 'hover:border-slate-500/30', blur: 'bg-slate-100/30' };
+      }
+  };
+
+  const getDefaultIcon = (code: string) => {
+      if (code === 'DKV') return <PaletteIcon className="w-12 h-12" />;
+      if (code === 'TKR') return <WrenchIcon className="w-12 h-12" />;
+      if (code === 'MPLB') return <BuildingIcon className="w-12 h-12" />;
+      return <BookIcon className="w-12 h-12" />;
+  };
 
   return (
     <div className="w-full h-full overflow-y-auto custom-scrollbar relative">
@@ -174,8 +199,6 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
       {/* Info Section - SAMBUTAN REDESIGN */}
       <section className="py-20 px-6 bg-white overflow-hidden animate-fade-in-up delay-300">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-            
-            {/* Left Side: Text Content */}
             <div className="space-y-6 order-2 lg:order-1">
                 <div>
                   <h3 className="text-emerald-800 font-bold text-lg uppercase tracking-wider mb-2">Sambutan Dari</h3>
@@ -186,7 +209,6 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
                       </span>
                   </h2>
                 </div>
-                
                 <div className="prose prose-lg text-slate-600 leading-relaxed text-justify">
                      <p className="whitespace-pre-line text-lg">
                         {principal.message}
@@ -194,30 +216,16 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
                 </div>
             </div>
 
-            {/* Right Side: Photo with decorations */}
             <div className="relative order-1 lg:order-2 flex justify-center lg:justify-end">
-                {/* Sparkle Decoration 1 (Top Left) */}
                 <svg className="absolute -left-8 top-10 w-16 h-16 text-amber-300 animate-pulse" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z" />
                 </svg>
-                
-                {/* Sparkle Decoration 2 (Bottom Right) */}
-                <svg className="absolute -right-4 bottom-20 w-12 h-12 text-amber-300 animate-pulse delay-700" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z" />
-                </svg>
-
-                {/* Background Box */}
                 <div className="relative z-10 w-full max-w-md">
-                    {/* Shadow Layer */}
                     <div className="absolute top-6 right-6 w-full h-full bg-slate-200/50 rounded-3xl -z-20 transform rotate-6"></div>
-                    {/* Main Background Color */}
                     <div className="absolute top-0 right-0 w-full h-full bg-slate-900 rounded-3xl -z-10 overflow-hidden">
                        <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/50 to-slate-900 opacity-50"></div>
-                       {/* Dotted Pattern Overlay */}
                        <div className="absolute top-0 left-0 w-full h-full opacity-10" style={{backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '10px 10px'}}></div>
                     </div>
-                    
-                    {/* Image Container */}
                     <div className="relative pt-8 px-8 pb-0 flex justify-center">
                          {principal.photoUrl ? (
                             <img 
@@ -227,19 +235,15 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
                               style={{ minHeight: '400px', maxHeight: '550px' }} 
                               onError={(e) => {
                                   e.currentTarget.style.display = 'none';
-                                  // Show fallback container logic below
                                   const fallback = document.getElementById('principal-fallback');
                                   if(fallback) fallback.style.display = 'flex';
                               }}
                             />
                          ) : null}
-                         {/* Fallback displayed if no photo OR if photo errors (handled by hiding img) */}
                          <div id="principal-fallback" className="w-full h-[450px] bg-slate-800 rounded-t-xl flex items-center justify-center text-slate-600 border-b border-slate-700" style={{display: principal.photoUrl ? 'none' : 'flex'}}>
                             <UserIcon className="w-32 h-32 opacity-50" />
                         </div>
                     </div>
-
-                    {/* Name Plate */}
                     <div className="absolute bottom-12 -left-4 md:-left-10 z-30">
                         <div className="bg-amber-500 text-slate-900 font-black px-6 md:px-8 py-3 md:py-4 text-lg md:text-xl shadow-xl transform -skew-x-6 border-b-4 border-amber-600">
                              <div className="transform skew-x-6 uppercase tracking-tight">
@@ -251,41 +255,33 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
             </div>
         </div>
 
-        {/* Major Cards Below */}
+        {/* Major Cards Below - Dynamic */}
         <div className="max-w-7xl mx-auto mt-24">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-             {/* Card 1: DKV */}
-             <div className="group p-5 bg-white rounded-2xl border border-slate-100 hover:border-emerald-500/30 flex items-center gap-6 shadow-sm hover:shadow-xl hover:-translate-x-1 transition-all cursor-default">
-                <div className="w-20 h-20 rounded-xl bg-slate-900 text-white flex items-center justify-center text-2xl font-black shrink-0 shadow-lg shadow-slate-900/20 group-hover:scale-105 transition-transform">
-                  DKV
-                </div>
-                <div>
-                  <div className="text-lg font-bold text-slate-900">Desain Komunikasi Visual</div>
-                  <div className="text-slate-500 text-sm mt-1">Seni Grafis & Multimedia Kreatif</div>
-                </div>
-             </div>
-
-             {/* Card 2: TKR */}
-             <div className="group p-5 bg-white rounded-2xl border border-slate-100 hover:border-emerald-500/30 flex items-center gap-6 shadow-sm hover:shadow-xl hover:-translate-x-1 transition-all cursor-default">
-                <div className="w-20 h-20 rounded-xl bg-slate-800 text-white flex items-center justify-center text-2xl font-black shrink-0 shadow-lg shadow-slate-800/20 group-hover:scale-105 transition-transform">
-                  TKR
-                </div>
-                <div>
-                  <div className="text-lg font-bold text-slate-900">Teknik Kendaraan Ringan</div>
-                  <div className="text-slate-500 text-sm mt-1">Otomotif Modern & Mekanikal</div>
-                </div>
-             </div>
-
-             {/* Card 3: PERKANTORAN */}
-             <div className="group p-5 bg-white rounded-2xl border border-slate-100 hover:border-emerald-500/30 flex items-center gap-6 shadow-sm hover:shadow-xl hover:-translate-x-1 transition-all cursor-default">
-                <div className="w-20 h-20 rounded-xl bg-slate-700 text-white flex items-center justify-center text-xl font-black shrink-0 text-center px-1 shadow-lg shadow-slate-700/20 group-hover:scale-105 transition-transform">
-                  MPLB
-                </div>
-                <div>
-                  <div className="text-lg font-bold text-slate-900">Manajemen Perkantoran</div>
-                  <div className="text-slate-500 text-sm mt-1">Administrasi Bisnis & Digital</div>
-                </div>
-             </div>
+             {majors.map((major) => {
+                 const theme = getThemeColors(major.colorTheme);
+                 return (
+                    <div 
+                        key={major.id}
+                        onClick={() => onNavigate(PortalMode.MAJORS)}
+                        className={`group p-5 bg-white rounded-2xl border border-slate-100 ${theme.border} flex items-center gap-6 shadow-sm hover:shadow-xl hover:-translate-x-1 transition-all cursor-pointer relative overflow-hidden`}
+                    >
+                        <div className={`absolute top-0 right-0 w-24 h-24 ${theme.blur} rounded-full blur-2xl -mr-10 -mt-10 transition-colors`}></div>
+                        {/* Increased Container Size to w-24 h-24 (from w-20) and p-3 (from p-2) for bigger logo */}
+                        <div className={`w-24 h-24 rounded-xl bg-gradient-to-br ${theme.bg} text-white flex items-center justify-center text-3xl font-black shrink-0 shadow-lg ${theme.shadow} group-hover:scale-105 transition-transform z-10 p-3`}>
+                        {major.logoUrl ? (
+                            <img src={major.logoUrl} alt={major.code} className="w-full h-full object-contain filter drop-shadow-md" onError={(e) => e.currentTarget.style.display='none'} />
+                        ) : (
+                            getDefaultIcon(major.code)
+                        )}
+                        </div>
+                        <div className="z-10">
+                        <div className={`text-2xl font-black text-slate-900 group-hover:${theme.text} transition-colors`}>{major.code}</div>
+                        <div className="text-slate-500 text-sm mt-1 font-medium line-clamp-1">{major.name}</div>
+                        </div>
+                    </div>
+                 );
+             })}
           </div>
         </div>
       </section>
@@ -332,11 +328,8 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
                                 }}
                             />
                         ) : null}
-                        {/* Always render fallback icon, hide if img loads (handled by z-index or absolute if needed, but here simple stacking works if img hidden) */}
                         <BookIcon className={`w-16 h-16 group-hover:scale-110 transition-transform duration-500 text-slate-300 group-hover:text-emerald-200 absolute z-0`} />
-                        {/* Overlay */}
                         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity z-10"></div>
-                        {/* Image covers icon if loaded because it is later in DOM or has higher Z? No, we need img to have z-10. */}
                         {item.imageUrl && <img src={item.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover z-10 transition-transform duration-700 group-hover:scale-110" onError={(e) => e.currentTarget.style.display = 'none'} />}
                     </div>
                     <div className="p-7 flex flex-col flex-1">
@@ -368,7 +361,6 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
        <footer className="py-12 bg-slate-900 text-center text-white relative overflow-hidden border-t border-slate-800">
           <div className="relative z-10 container mx-auto px-6">
             <h3 className="font-bold text-2xl mb-8 tracking-wider">Follow Us</h3>
-            
             <div className="flex justify-center gap-4 sm:gap-6 mb-12">
                {[
                  { Icon: FacebookIcon, label: "Facebook" },
@@ -376,18 +368,12 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
                  { Icon: YoutubeIcon, label: "YouTube" },
                  { Icon: TiktokIcon, label: "TikTok" }
                ].map((social, idx) => (
-                 <div 
-                   key={idx}
-                   aria-label={social.label}
-                   className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center border-2 border-white/20 rounded-lg text-white/20 cursor-not-allowed transition-all duration-300"
-                 >
+                 <div key={idx} aria-label={social.label} className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center border-2 border-white/20 rounded-lg text-white/20 cursor-not-allowed transition-all duration-300">
                    <social.Icon className="w-7 h-7 sm:w-8 sm:h-8" />
                  </div>
                ))}
             </div>
-
             <div className="w-full h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent mb-8 max-w-2xl mx-auto"></div>
-
             <p className="text-slate-500 text-sm">&copy; 2026 SMKS Mathlaul Anwar Buaranjati. All Rights Reserved.</p>
           </div>
        </footer>

@@ -17,7 +17,7 @@
         scroll-behavior: smooth;
       }
 
-      /* Custom scrollbar */
+      /* Custom scrollbar - Default */
       ::-webkit-scrollbar {
         width: 8px;
         height: 8px;
@@ -32,6 +32,15 @@
       }
       ::-webkit-scrollbar-thumb:hover {
         background: #94a3b8;
+      }
+
+      /* Utility to hide scrollbar but keep functionality (for mobile nav) */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
       }
 
       /* Animations */

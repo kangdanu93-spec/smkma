@@ -7,10 +7,12 @@ import SchoolDashboard from './components/SchoolDashboard';
 import SimpleContent from './components/SimpleContent';
 import AdminPanel from './components/AdminPanel';
 import NewsDetail from './components/NewsDetail';
+import { databaseService } from './services/database';
 
 export default function App() {
   const [currentMode, setCurrentMode] = useState<PortalMode>(PortalMode.HOME);
   const [newsId, setNewsId] = useState<string | null>(null);
+  const [schoolLogo, setSchoolLogo] = useState<string>('');
 
   useEffect(() => {
     // Check for news_id in URL params on load
@@ -19,6 +21,15 @@ export default function App() {
     if (id) {
       setNewsId(id);
     }
+
+    // Fetch School Logo
+    const fetchConfig = async () => {
+        const config = await databaseService.getPrincipalData();
+        if (config && config.schoolLogoUrl) {
+            setSchoolLogo(config.schoolLogoUrl);
+        }
+    };
+    fetchConfig();
   }, []);
 
   // If viewing a specific news item, render only NewsDetail
@@ -26,107 +37,71 @@ export default function App() {
     return <NewsDetail id={newsId} />;
   }
 
+  // Navigation Items Config
+  const navItems = [
+    { mode: PortalMode.HOME, icon: HomeIcon, label: "Beranda" },
+    { mode: PortalMode.PROFILE, icon: BuildingIcon, label: "Profil" },
+    { mode: PortalMode.MAJORS, icon: GraduationCapIcon, label: "Jurusan" },
+    { mode: PortalMode.BKK, icon: BriefcaseIcon, label: "BKK" },
+    { mode: PortalMode.PPDB, icon: ClipboardIcon, label: "PPDB", special: "emerald" },
+    { mode: PortalMode.UKOM, icon: CheckBadgeIcon, label: "UKOM", special: "amber" },
+    { mode: PortalMode.ADMIN, icon: LockIcon, label: "Admin" },
+  ];
+
   return (
     <div className="h-screen w-full flex flex-col bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 text-slate-900 font-sans selection:bg-emerald-200 selection:text-emerald-900">
       {/* Professional Header */}
-      <header className="flex items-center justify-between px-6 py-4 bg-white/80 backdrop-blur-md border-b border-white/50 sticky top-0 z-50 shadow-sm animate-fade-in-up">
+      <header className="flex items-center justify-between px-4 md:px-6 py-3 md:py-4 bg-white/80 backdrop-blur-md border-b border-white/50 sticky top-0 z-50 shadow-sm animate-fade-in-up">
+        {/* Logo Section */}
         <div 
           onClick={() => setCurrentMode(PortalMode.HOME)}
-          className="flex items-center gap-4 cursor-pointer group max-w-[40%]"
+          className="flex items-center gap-3 md:gap-4 cursor-pointer group shrink-0"
         >
-           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-900 to-emerald-700 flex items-center justify-center font-bold text-white shadow-lg shadow-emerald-900/20 text-xl shrink-0 group-hover:scale-105 transition-transform duration-300">
-             M
+           <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center font-bold text-white shrink-0 group-hover:scale-105 transition-transform duration-300 ${!schoolLogo ? 'bg-gradient-to-br from-emerald-900 to-emerald-700 shadow-lg shadow-emerald-900/20 text-lg md:text-xl' : 'bg-transparent'}`}>
+             {schoolLogo ? (
+                 <img src={schoolLogo} alt="Logo Sekolah" className="w-full h-full object-contain filter drop-shadow-sm" />
+             ) : (
+                 "M"
+             )}
            </div>
-           <div className="flex flex-col justify-center">
-             <span className="text-sm md:text-lg font-black tracking-tight leading-none text-slate-900 uppercase truncate group-hover:text-emerald-900 transition-colors">SMKS MATHLAUL ANWAR</span>
-             <span className="text-[10px] md:text-xs font-bold text-emerald-600 tracking-widest uppercase">Buaranjati</span>
+           {/* Text hidden on mobile to save space */}
+           <div className="hidden md:flex flex-col justify-center">
+             <span className="text-lg font-black tracking-tight leading-none text-slate-900 uppercase truncate group-hover:text-emerald-900 transition-colors">SMKS MATHLAUL ANWAR</span>
+             <span className="text-xs font-bold text-emerald-600 tracking-widest uppercase">Buaranjati</span>
            </div>
         </div>
 
-        <nav className="flex bg-slate-100/50 backdrop-blur-sm rounded-full p-1.5 border border-white/60 ml-4 shrink-0 overflow-x-auto max-w-[60vw] sm:max-w-none custom-scrollbar shadow-inner">
-          <button 
-            onClick={() => setCurrentMode(PortalMode.HOME)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-300 ${
-              currentMode === PortalMode.HOME 
-                ? 'bg-white text-emerald-900 shadow-md ring-1 ring-slate-100 scale-100' 
-                : 'text-slate-500 hover:text-slate-800 hover:bg-white/50 scale-95 hover:scale-100'
-            }`}
-          >
-            <HomeIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">Beranda</span>
-          </button>
-          
-          <button 
-            onClick={() => setCurrentMode(PortalMode.PROFILE)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-300 ${
-              currentMode === PortalMode.PROFILE 
-                ? 'bg-white text-emerald-900 shadow-md ring-1 ring-slate-100 scale-100' 
-                : 'text-slate-500 hover:text-slate-800 hover:bg-white/50 scale-95 hover:scale-100'
-            }`}
-          >
-            <BuildingIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">Profil</span>
-          </button>
-          
-          <button 
-            onClick={() => setCurrentMode(PortalMode.MAJORS)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-300 ${
-              currentMode === PortalMode.MAJORS 
-                ? 'bg-white text-emerald-900 shadow-md ring-1 ring-slate-100 scale-100' 
-                : 'text-slate-500 hover:text-slate-800 hover:bg-white/50 scale-95 hover:scale-100'
-            }`}
-          >
-            <GraduationCapIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">Jurusan</span>
-          </button>
-          
-          <button 
-            onClick={() => setCurrentMode(PortalMode.BKK)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-300 ${
-              currentMode === PortalMode.BKK 
-                ? 'bg-white text-emerald-900 shadow-md ring-1 ring-slate-100 scale-100' 
-                : 'text-slate-500 hover:text-slate-800 hover:bg-white/50 scale-95 hover:scale-100'
-            }`}
-          >
-            <BriefcaseIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">BKK</span>
-          </button>
+        {/* Navigation Section */}
+        <nav className="flex items-center gap-1 md:gap-2 ml-4 overflow-x-auto no-scrollbar mask-gradient">
+           {navItems.map((item) => {
+             const isActive = currentMode === item.mode;
+             
+             // Dynamic Class Logic
+             let baseClass = "flex items-center justify-center gap-2 px-3 py-2 md:px-4 md:py-2 rounded-full text-sm font-bold transition-all duration-300 shrink-0";
+             let activeClass = "";
+             let inactiveClass = "text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 scale-95 hover:scale-100";
 
-          <button 
-            onClick={() => setCurrentMode(PortalMode.PPDB)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-300 ${
-              currentMode === PortalMode.PPDB 
-                ? 'bg-gradient-to-r from-emerald-800 to-emerald-900 text-white shadow-lg shadow-emerald-900/20' 
-                : 'text-slate-500 hover:text-slate-800 hover:bg-white/50 scale-95 hover:scale-100'
-            }`}
-          >
-            <ClipboardIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">PPDB</span>
-          </button>
+             if (item.special === 'emerald') {
+                activeClass = "bg-gradient-to-r from-emerald-800 to-emerald-900 text-white shadow-lg shadow-emerald-900/20 scale-100";
+             } else if (item.special === 'amber') {
+                activeClass = "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg shadow-amber-600/20 scale-100";
+             } else {
+                activeClass = "bg-white text-emerald-900 shadow-md ring-1 ring-slate-200 scale-100";
+             }
 
-          <button 
-            onClick={() => setCurrentMode(PortalMode.UKOM)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-300 ${
-              currentMode === PortalMode.UKOM 
-                ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg shadow-amber-600/20' 
-                : 'text-slate-500 hover:text-slate-800 hover:bg-white/50 scale-95 hover:scale-100'
-            }`}
-          >
-            <CheckBadgeIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">E-UKOM</span>
-          </button>
-
-          <button 
-            onClick={() => setCurrentMode(PortalMode.ADMIN)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all duration-300 ${
-              currentMode === PortalMode.ADMIN 
-                ? 'bg-slate-800 text-white shadow-lg shadow-slate-900/20' 
-                : 'text-slate-500 hover:text-slate-800 hover:bg-white/50 scale-95 hover:scale-100'
-            }`}
-          >
-            <LockIcon className="w-4 h-4" />
-            <span className="hidden sm:inline">Admin</span>
-          </button>
+             return (
+               <button 
+                 key={item.mode}
+                 onClick={() => setCurrentMode(item.mode)}
+                 className={`${baseClass} ${isActive ? activeClass : inactiveClass}`}
+                 title={item.label}
+               >
+                 <item.icon className="w-5 h-5" />
+                 {/* Label hidden on mobile (screens < md), visible on desktop */}
+                 <span className="hidden md:inline">{item.label}</span>
+               </button>
+             );
+           })}
         </nav>
       </header>
 

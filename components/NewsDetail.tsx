@@ -10,14 +10,23 @@ interface NewsDetailProps {
 export default function NewsDetail({ id }: NewsDetailProps) {
   const [news, setNews] = useState<NewsItem | null>(null);
   const [loading, setLoading] = useState(true);
+  const [schoolLogo, setSchoolLogo] = useState<string>('');
 
   useEffect(() => {
-    const fetchNews = async () => {
+    const fetchData = async () => {
+      // Fetch News
       const data = await databaseService.getNewsById(id);
       setNews(data);
+      
+      // Fetch Config for Logo
+      const config = await databaseService.getPrincipalData();
+      if (config && config.schoolLogoUrl) {
+          setSchoolLogo(config.schoolLogoUrl);
+      }
+      
       setLoading(false);
     };
-    fetchNews();
+    fetchData();
   }, [id]);
 
   if (loading) {
@@ -49,7 +58,11 @@ export default function NewsDetail({ id }: NewsDetailProps) {
        <header className="border-b border-slate-100 bg-white sticky top-0 z-50">
           <div className="container mx-auto px-6 py-4 flex justify-between items-center">
              <div className="flex items-center gap-3">
-                 <div className="w-8 h-8 rounded-lg bg-emerald-900 flex items-center justify-center font-bold text-white shadow-sm">M</div>
+                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-white shadow-sm overflow-hidden ${!schoolLogo ? 'bg-emerald-900' : ''}`}>
+                    {schoolLogo ? (
+                        <img src={schoolLogo} alt="Logo" className="w-full h-full object-contain" />
+                    ) : "M"}
+                 </div>
                  <div className="flex flex-col">
                    <span className="text-sm font-black text-slate-900 uppercase">SMKS Mathlaul Anwar</span>
                    <span className="text-[10px] font-bold text-emerald-600 uppercase">Buaranjati</span>

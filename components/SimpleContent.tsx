@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { PortalMode } from '../types';
-import { BuildingIcon, GraduationCapIcon, BriefcaseIcon, ClipboardIcon, LoaderIcon, UserIcon, CheckBadgeIcon } from './ui/Icons';
+import { PortalMode, MajorItem } from '../types';
+import { BuildingIcon, GraduationCapIcon, BriefcaseIcon, ClipboardIcon, LoaderIcon, UserIcon, CheckBadgeIcon, PaletteIcon, WrenchIcon, ArrowRightIcon, BookIcon } from './ui/Icons';
 import { databaseService, Registrant } from '../services/database';
 
 interface SimpleContentProps {
@@ -21,18 +21,32 @@ export default function SimpleContent({ mode }: SimpleContentProps) {
   const [registrants, setRegistrants] = useState<Registrant[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
 
-  // Load data when entering Admin view
+  // Majors State
+  const [majors, setMajors] = useState<MajorItem[]>([]);
+  const [loadingMajors, setLoadingMajors] = useState(false);
+
+  // Load data when entering specific modes
   useEffect(() => {
     if (showAdmin) {
       loadRegistrants();
     }
-  }, [showAdmin]);
+    if (mode === PortalMode.MAJORS) {
+        loadMajors();
+    }
+  }, [showAdmin, mode]);
 
   const loadRegistrants = async () => {
     setIsLoadingData(true);
     const data = await databaseService.getRegistrants();
     setRegistrants(data);
     setIsLoadingData(false);
+  };
+
+  const loadMajors = async () => {
+      setLoadingMajors(true);
+      const data = await databaseService.getMajors();
+      setMajors(data);
+      setLoadingMajors(false);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -61,6 +75,25 @@ export default function SimpleContent({ mode }: SimpleContentProps) {
 
     // Hide success message after 3 seconds
     setTimeout(() => setIsSuccess(false), 3000);
+  };
+
+  // Helper for Major Theme
+  const getMajorTheme = (theme: string) => {
+    switch(theme) {
+        case 'orange': return { gradient: 'from-orange-500 to-amber-500', iconColor: 'text-amber-100', text: 'text-orange-600' };
+        case 'blue': return { gradient: 'from-blue-600 to-indigo-600', iconColor: 'text-blue-100', text: 'text-blue-700' };
+        case 'purple': return { gradient: 'from-purple-600 to-fuchsia-600', iconColor: 'text-purple-100', text: 'text-purple-700' };
+        case 'emerald': return { gradient: 'from-emerald-600 to-teal-600', iconColor: 'text-emerald-100', text: 'text-emerald-700' };
+        case 'rose': return { gradient: 'from-rose-600 to-pink-600', iconColor: 'text-rose-100', text: 'text-rose-700' };
+        default: return { gradient: 'from-slate-700 to-slate-900', iconColor: 'text-slate-100', text: 'text-slate-700' };
+    }
+  };
+
+  const getMajorIcon = (code: string) => {
+      if (code === 'DKV') return <PaletteIcon className="w-16 h-16" />;
+      if (code === 'TKR') return <WrenchIcon className="w-16 h-16" />;
+      if (code === 'MPLB') return <BuildingIcon className="w-16 h-16" />;
+      return <BookIcon className="w-16 h-16" />;
   };
 
   const getContent = () => {
@@ -102,54 +135,72 @@ export default function SimpleContent({ mode }: SimpleContentProps) {
         return {
           title: "Kompetensi Keahlian",
           icon: <GraduationCapIcon className="w-8 h-8 text-emerald-900" />,
-          content: (
-            <div className="grid grid-cols-1 gap-6">
-               {[
-                 { 
-                   code: "DKV", 
-                   name: "Desain Komunikasi Visual", 
-                   desc: "Mempelajari seni desain grafis, fotografi, videografi, ilustrasi, dan multimedia interaktif. Siswa diajarkan untuk mengolah pesan visual yang komunikatif dan estetis menggunakan perangkat lunak industri kreatif terkini.",
-                   gradient: "from-orange-500 to-amber-500",
-                   shadow: "shadow-orange-500/30",
-                   hoverBorder: "group-hover:border-orange-200",
-                   textAccent: "group-hover:text-orange-600"
-                 },
-                 { 
-                   code: "TKR", 
-                   name: "Teknik Kendaraan Ringan", 
-                   desc: "Fokus pada penguasaan teknik otomotif kendaraan roda empat, meliputi perawatan mesin, sistem kelistrikan bodi, sasis, dan pemindah tenaga. Mencetak mekanik handal yang siap terjun ke industri otomotif modern.",
-                   gradient: "from-blue-600 to-indigo-600",
-                   shadow: "shadow-blue-600/30",
-                   hoverBorder: "group-hover:border-blue-200",
-                   textAccent: "group-hover:text-blue-700"
-                 },
-                 { 
-                   code: "MPLB", 
-                   name: "Manajemen Perkantoran", 
-                   desc: "Membekali siswa dengan keterampilan administrasi perkantoran digital, kearsipan, korespondensi, teknologi perkantoran, dan layanan pelanggan (public speaking). Menyiapkan tenaga profesional yang rapi, cekatan, dan berwawasan luas.",
-                   gradient: "from-purple-600 to-fuchsia-600",
-                   shadow: "shadow-purple-600/30",
-                   hoverBorder: "group-hover:border-purple-200",
-                   textAccent: "group-hover:text-purple-700"
-                 }
-               ].map((major, idx) => (
-                 <div key={idx} className={`bg-white p-6 rounded-2xl border border-slate-100 ${major.hoverBorder} transition-all duration-300 shadow-sm hover:shadow-xl group hover:-translate-y-1 relative overflow-hidden`}>
-                   <div className="flex flex-col md:flex-row gap-6 items-start">
-                      <div className={`w-20 h-20 rounded-xl bg-gradient-to-br ${major.gradient} text-white flex items-center justify-center text-2xl font-black shrink-0 shadow-lg ${major.shadow} group-hover:scale-105 transition-transform duration-500`}>
-                        {major.code}
-                      </div>
-                      <div className="space-y-2 relative z-10">
-                        <h4 className={`text-xl font-bold text-slate-900 ${major.textAccent} transition-colors`}>{major.name}</h4>
-                        <p className="text-slate-600 text-sm leading-relaxed">{major.desc}</p>
-                        <div className="pt-2">
-                           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider group-hover:text-slate-600 transition-colors">Program Unggulan</span>
-                        </div>
-                      </div>
-                   </div>
-                   {/* Decorative background blob */}
-                   <div className={`absolute -right-10 -bottom-10 w-40 h-40 bg-gradient-to-br ${major.gradient} opacity-0 group-hover:opacity-5 rounded-full blur-3xl transition-opacity duration-500`}></div>
-                 </div>
-               ))}
+          content: loadingMajors ? (
+              <div className="flex justify-center p-12"><LoaderIcon className="w-8 h-8 animate-spin text-emerald-900" /></div>
+          ) : (
+            <div className="grid grid-cols-1 gap-12">
+               {majors.map((major, idx) => {
+                   const theme = getMajorTheme(major.colorTheme);
+                   return (
+                     <div key={idx} className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden flex flex-col md:flex-row hover:shadow-2xl transition-all duration-500 group">
+                       
+                       {/* Logo & Header Section */}
+                       <div className={`md:w-1/3 bg-gradient-to-br ${theme.gradient} p-8 flex flex-col items-center justify-center text-center relative overflow-hidden`}>
+                          <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                          <div className="absolute -top-10 -left-10 w-40 h-40 bg-white/20 rounded-full blur-3xl"></div>
+                          
+                          {/* Logo Badge - Enlarged to w-32 h-32 */}
+                          <div className="w-32 h-32 bg-white/20 backdrop-blur-md rounded-3xl border border-white/30 flex items-center justify-center mb-6 shadow-lg transform group-hover:rotate-6 transition-transform duration-500 p-4">
+                              <div className={theme.iconColor}>
+                                {major.logoUrl ? (
+                                    <img src={major.logoUrl} className="w-full h-full object-contain filter drop-shadow-md" alt={major.code} onError={(e) => e.currentTarget.style.display='none'} />
+                                ) : (
+                                    getMajorIcon(major.code)
+                                )}
+                              </div>
+                          </div>
+    
+                          <h2 className="text-4xl font-black text-white tracking-tighter mb-1">{major.code}</h2>
+                          <p className="text-white/80 text-sm font-medium uppercase tracking-widest">{major.name}</p>
+                       </div>
+    
+                       {/* Content Section */}
+                       <div className="md:w-2/3 p-8 md:p-10 flex flex-col">
+                          <div className="mb-6">
+                            <h3 className="text-2xl font-bold text-slate-900 mb-3 group-hover:text-emerald-800 transition-colors">{major.name}</h3>
+                            <p className="text-slate-600 leading-relaxed text-sm md:text-base">
+                              {major.description}
+                            </p>
+                          </div>
+    
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-auto">
+                             <div>
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Kompetensi Utama</h4>
+                                <ul className="space-y-2">
+                                   {major.skills.map((skill, i) => (
+                                     <li key={i} className="flex items-center gap-2 text-sm text-slate-700">
+                                       <div className={`w-1.5 h-1.5 rounded-full bg-gradient-to-r ${theme.gradient}`}></div>
+                                       {skill}
+                                     </li>
+                                   ))}
+                                </ul>
+                             </div>
+                             <div>
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Prospek Karir</h4>
+                                <ul className="space-y-2">
+                                   {major.careers.map((job, i) => (
+                                     <li key={i} className="flex items-center gap-2 text-sm text-slate-700">
+                                        <CheckBadgeIcon className="w-4 h-4 text-emerald-500" />
+                                        {job}
+                                     </li>
+                                   ))}
+                                </ul>
+                             </div>
+                          </div>
+                       </div>
+                     </div>
+                   );
+               })}
             </div>
           )
         };

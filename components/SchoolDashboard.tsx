@@ -53,7 +53,7 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
   const getDefaultIcon = (code: string) => {
       if (code === 'DKV') return <PaletteIcon className="w-12 h-12" />;
       if (code === 'TKR') return <WrenchIcon className="w-12 h-12" />;
-      if (code === 'MPLB') return <BuildingIcon className="w-12 h-12" />;
+      if (code === 'AP' || code === 'MPLB') return <BuildingIcon className="w-12 h-12" />;
       return <BookIcon className="w-12 h-12" />;
   };
 

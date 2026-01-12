@@ -296,7 +296,10 @@ export const databaseService = {
     try {
       const existingData = localStorage.getItem(LOCAL_STORAGE_MAJORS_KEY);
       if (existingData) {
-        return JSON.parse(existingData);
+        const parsedData = JSON.parse(existingData);
+        // Simple migration if AP is missing but MPLB exists (optional, mostly for current session)
+        // You can comment this out if you want to strictly rely on what is in storage
+        return parsedData;
       } else {
         // Return Default Data if completely empty (First Run)
         const defaults: MajorItem[] = [
@@ -322,8 +325,8 @@ export const databaseService = {
           },
           {
             id: 'default-3',
-            code: 'MPLB',
-            name: 'Manajemen Perkantoran',
+            code: 'AP',
+            name: 'Administrasi Perkantoran',
             description: 'Menyiapkan tenaga profesional bidang administrasi bisnis modern, kearsipan digital, dan public speaking.',
             logoUrl: '',
             colorTheme: 'purple',

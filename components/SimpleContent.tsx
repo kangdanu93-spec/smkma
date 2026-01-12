@@ -92,7 +92,7 @@ export default function SimpleContent({ mode }: SimpleContentProps) {
   const getMajorIcon = (code: string) => {
       if (code === 'DKV') return <PaletteIcon className="w-16 h-16" />;
       if (code === 'TKR') return <WrenchIcon className="w-16 h-16" />;
-      if (code === 'MPLB') return <BuildingIcon className="w-16 h-16" />;
+      if (code === 'AP' || code === 'MPLB') return <BuildingIcon className="w-16 h-16" />;
       return <BookIcon className="w-16 h-16" />;
   };
 
@@ -320,6 +320,7 @@ export default function SimpleContent({ mode }: SimpleContentProps) {
                                   <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wide border ${
                                     reg.major === 'DKV' ? 'bg-slate-100 text-slate-700 border-slate-200' :
                                     reg.major === 'TKR' ? 'bg-slate-800 text-white border-slate-800' :
+                                    (reg.major === 'AP' || reg.major === 'MPLB') ? 'bg-purple-100 text-purple-700 border-purple-200' :
                                     'bg-slate-600 text-white border-slate-600'
                                   }`}>
                                     {reg.major}
@@ -405,7 +406,7 @@ export default function SimpleContent({ mode }: SimpleContentProps) {
                             >
                               <option value="DKV">Desain Komunikasi Visual (DKV)</option>
                               <option value="TKR">Teknik Kendaraan Ringan (TKR)</option>
-                              <option value="MPLB">Manajemen Perkantoran (MPLB)</option>
+                              <option value="AP">Administrasi Perkantoran (AP)</option>
                             </select>
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
                                 <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1L5 5L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>

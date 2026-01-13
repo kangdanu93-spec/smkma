@@ -10,7 +10,19 @@ interface NewsDetailProps {
 export default function NewsDetail({ id }: NewsDetailProps) {
   const [news, setNews] = useState<NewsItem | null>(null);
   const [loading, setLoading] = useState(true);
-  const [schoolLogo, setSchoolLogo] = useState<string>('');
+  
+  // OPTIMIZATION: Initialize state from LocalStorage
+  const [schoolLogo, setSchoolLogo] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+        try {
+            const cached = localStorage.getItem('principal_data_local');
+            if (cached) {
+                return JSON.parse(cached).schoolLogoUrl || '';
+            }
+        } catch (e) {}
+    }
+    return '';
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -18,7 +30,7 @@ export default function NewsDetail({ id }: NewsDetailProps) {
       const data = await databaseService.getNewsById(id);
       setNews(data);
       
-      // Fetch Config for Logo
+      // Fetch Config for Logo (Async update)
       const config = await databaseService.getPrincipalData();
       if (config && config.schoolLogoUrl) {
           setSchoolLogo(config.schoolLogoUrl);
@@ -60,7 +72,15 @@ export default function NewsDetail({ id }: NewsDetailProps) {
              <div className="flex items-center gap-3">
                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-white shadow-sm overflow-hidden ${!schoolLogo ? 'bg-emerald-900' : ''}`}>
                     {schoolLogo ? (
-                        <img src={schoolLogo} alt="Logo" className="w-full h-full object-contain" />
+                        <img 
+                          src={schoolLogo} 
+                          alt="Logo" 
+                          className="w-full h-full object-contain"
+                          width="40"
+                          height="40"
+                          // @ts-ignore
+                          fetchpriority="high"
+                        />
                     ) : "M"}
                  </div>
                  <div className="flex flex-col">

@@ -12,7 +12,19 @@ import { databaseService } from './services/database';
 export default function App() {
   const [currentMode, setCurrentMode] = useState<PortalMode>(PortalMode.HOME);
   const [newsId, setNewsId] = useState<string | null>(null);
-  const [schoolLogo, setSchoolLogo] = useState<string>('');
+  
+  // OPTIMIZATION: Initialize state from LocalStorage to prevent Logo Flicker/Delay
+  const [schoolLogo, setSchoolLogo] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+        try {
+            const cached = localStorage.getItem('principal_data_local');
+            if (cached) {
+                return JSON.parse(cached).schoolLogoUrl || '';
+            }
+        } catch (e) {}
+    }
+    return '';
+  });
 
   useEffect(() => {
     // Check for news_id in URL params on load
@@ -22,7 +34,7 @@ export default function App() {
       setNewsId(id);
     }
 
-    // Fetch School Logo
+    // Fetch School Logo (Async update)
     const fetchConfig = async () => {
         const config = await databaseService.getPrincipalData();
         if (config && config.schoolLogoUrl) {
@@ -62,7 +74,15 @@ export default function App() {
         >
            <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center font-bold text-white shrink-0 group-hover:scale-105 transition-transform duration-300 ${!schoolLogo ? 'bg-gradient-to-br from-emerald-900 to-emerald-700 shadow-lg shadow-emerald-900/20 text-lg md:text-xl' : 'bg-transparent'}`}>
              {schoolLogo ? (
-                 <img src={schoolLogo} alt="Logo Sekolah" className="w-full h-full object-contain filter drop-shadow-sm" />
+                 <img 
+                    src={schoolLogo} 
+                    alt="Logo Sekolah" 
+                    className="w-full h-full object-contain filter drop-shadow-sm" 
+                    width="48"
+                    height="48"
+                    // @ts-ignore
+                    fetchpriority="high"
+                 />
              ) : (
                  "M"
              )}

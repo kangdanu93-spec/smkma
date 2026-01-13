@@ -80,15 +80,24 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
     <div className="w-full h-full overflow-y-auto custom-scrollbar relative">
       
       {/* --- HERO SECTION WITH SLIDER --- */}
-      <section className="relative w-full h-[600px] flex flex-col items-center justify-center text-center overflow-hidden">
+      <section className="relative w-full h-[600px] flex flex-col items-center justify-center text-center overflow-hidden bg-slate-900">
         
         {/* Background Slideshow */}
         {heroImages.length > 0 && heroImages.map((img, index) => (
           <div 
             key={index}
             className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100' : 'opacity-0'}`}
+            style={{ zIndex: index === currentSlide ? 1 : 0 }}
           >
-             <img src={img} alt="Hero Background" className="w-full h-full object-cover" />
+             <img 
+                src={img} 
+                alt="Hero Background" 
+                className="w-full h-full object-cover" 
+                loading={index === 0 ? "eager" : "lazy"} 
+                // @ts-ignore
+                fetchpriority={index === 0 ? "high" : "auto"}
+                decoding="async"
+             />
              {/* Dark Overlay for Text Readability */}
              <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-[2px]"></div>
           </div>
@@ -152,7 +161,7 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
         )}
       </section>
 
-      {/* --- LATEST NEWS GRID (PREMIUM & ELEGANT) --- */}
+      {/* --- LATEST NEWS GRID (COMPACT & RESPONSIVE) --- */}
       <section className="py-12 px-6 max-w-7xl mx-auto relative z-20">
          {/* Section Header */}
          <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
@@ -173,16 +182,20 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
             </button>
          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
             {loadingNews ? (
-                // Elegant Skeletons
+                // Compact Skeletons
                  [...Array(3)].map((_, i) => (
-                    <div key={i} className="bg-white rounded-3xl overflow-hidden h-96 animate-pulse shadow-2xl border border-white/50">
-                        <div className="w-full h-64 bg-slate-200"></div>
-                        <div className="p-8 space-y-4">
-                            <div className="h-4 bg-slate-200 rounded-full w-1/3 mb-2"></div>
-                            <div className="h-8 bg-slate-200 rounded-lg w-full"></div>
-                            <div className="h-4 bg-slate-200 rounded-full w-2/3 mt-4"></div>
+                    <div key={i} className="bg-white rounded-3xl overflow-hidden flex flex-col h-full animate-pulse shadow-lg border border-slate-100">
+                        <div className="w-full h-56 bg-slate-200"></div>
+                        <div className="p-6 space-y-4 flex-1">
+                            <div className="h-6 bg-slate-200 rounded-lg w-1/3 mb-2"></div>
+                            <div className="h-6 bg-slate-200 rounded-lg w-full"></div>
+                            <div className="h-6 bg-slate-200 rounded-lg w-2/3"></div>
+                            <div className="mt-auto pt-4 flex justify-between items-center">
+                                 <div className="h-4 bg-slate-200 rounded w-1/4"></div>
+                                 <div className="h-10 w-10 bg-slate-200 rounded-full"></div>
+                            </div>
                         </div>
                     </div>
                 ))
@@ -198,57 +211,64 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
                         href={`?news_id=${item.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`group bg-white rounded-[2rem] overflow-hidden cursor-pointer hover:-translate-y-3 hover:shadow-2xl hover:shadow-emerald-900/10 transition-all duration-500 shadow-xl border border-slate-100 flex flex-col h-full opacity-0 animate-fade-in-up`}
+                        className={`group bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 border border-slate-100 flex flex-col h-full opacity-0 animate-fade-in-up`}
                         style={{ animationDelay: `${index * 150}ms`, animationFillMode: 'forwards' }}
                     >
-                        {/* Image Area - Full Bleed & Large */}
-                        <div className="w-full h-72 bg-slate-100 relative overflow-hidden shrink-0">
+                        {/* Image Area - Compact Aspect Ratio */}
+                        <div className="relative h-56 md:h-64 overflow-hidden shrink-0">
                             {item.imageUrl ? (
-                                <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-in-out" />
+                                <img 
+                                    src={item.imageUrl} 
+                                    alt={item.title} 
+                                    loading="lazy"
+                                    decoding="async"
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" 
+                                />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center bg-slate-50 text-slate-300">
-                                    <NewspaperIcon className="w-20 h-20 opacity-50" />
+                                    <NewspaperIcon className="w-16 h-16 opacity-50" />
                                 </div>
                             )}
                             
-                            {/* Overlay Gradient */}
-                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-500"></div>
+                            {/* Overlay Gradient (Subtle) */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent opacity-60 group-hover:opacity-40 transition-opacity"></div>
 
-                            {/* Floating Category Badge */}
-                            <div className="absolute top-5 left-5">
-                                 <span className="px-4 py-1.5 bg-white/90 backdrop-blur-xl text-emerald-950 text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg border border-white/60 flex items-center gap-2 group-hover:bg-emerald-500 group-hover:text-white transition-colors duration-300">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 group-hover:bg-white animate-pulse"></span>
+                            {/* Badge Pilled */}
+                            <div className="absolute top-4 left-4">
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/95 backdrop-blur-sm rounded-full text-[10px] font-black tracking-widest uppercase text-emerald-800 shadow-sm">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                                     {item.category}
-                                 </span>
+                                </span>
                             </div>
                         </div>
                         
                         {/* Content */}
-                        <div className="p-8 flex flex-col flex-1 relative bg-white">
-                            {/* Decorative Elements */}
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-50 to-transparent rounded-bl-[100px] opacity-50 group-hover:opacity-100 transition-opacity"></div>
-
-                            <div className="flex items-center gap-3 mb-4 text-xs font-bold text-slate-400 relative z-10">
-                               <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                        <div className="p-5 md:p-6 flex flex-col flex-1 bg-white">
+                            
+                            {/* Date Badge */}
+                            <div className="flex items-center gap-2 mb-3">
+                                <div className="px-3 py-1.5 bg-slate-50 rounded-lg text-xs font-bold text-slate-500 flex items-center gap-2 border border-slate-100">
                                    <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                    </svg>
                                    {new Date(item.date).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}
-                               </div>
+                                </div>
                             </div>
                             
-                            <h3 className="text-xl md:text-2xl font-black text-slate-900 mb-4 leading-snug group-hover:text-emerald-800 transition-colors line-clamp-2 relative z-10">
+                            <h3 className="text-lg md:text-xl font-black text-slate-900 mb-3 leading-tight line-clamp-2 group-hover:text-emerald-800 transition-colors">
                                 {item.title}
                             </h3>
                             
-                            <p className="text-slate-500 line-clamp-3 mb-8 text-sm leading-relaxed relative z-10 font-medium">
+                            <p className="text-slate-500 text-sm leading-relaxed mb-6 line-clamp-3 flex-1">
                                 {item.content.replace(/<[^>]+>/g, '')}
                             </p>
 
-                            <div className="mt-auto pt-6 border-t border-slate-100 flex items-center justify-between group/btn relative z-10">
-                                <span className="text-sm font-black text-emerald-900 group-hover:text-emerald-600 transition-colors uppercase tracking-wide text-[10px]">Baca Selengkapnya</span>
-                                <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-emerald-900 group-hover:text-white transition-all duration-300 shadow-sm group-hover:shadow-emerald-900/30 group-hover:scale-110">
-                                     <ArrowRightIcon className="w-5 h-5 group-hover:-rotate-45 transition-transform duration-300" />
+                            <div className="mt-auto flex items-center justify-between pt-4 border-t border-slate-50">
+                                <span className="text-[10px] font-black text-emerald-900 uppercase tracking-wider group-hover:underline decoration-emerald-500 decoration-2 underline-offset-4">
+                                    Baca Selengkapnya
+                                </span>
+                                <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300 shadow-sm">
+                                     <ArrowRightIcon className="w-4 h-4" />
                                 </div>
                             </div>
                         </div>
@@ -293,6 +313,8 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
                             <img 
                               src={principal.photoUrl} 
                               alt={principal.name} 
+                              loading="lazy"
+                              decoding="async"
                               className="w-full h-auto object-cover rounded-t-xl shadow-2xl z-10 relative transform hover:scale-[1.02] transition-transform duration-500" 
                               style={{ minHeight: '400px', maxHeight: '550px' }} 
                               onError={(e) => {
@@ -332,7 +354,7 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
                         {/* Container Size w-24 h-24 */}
                         <div className={`w-24 h-24 rounded-xl bg-gradient-to-br ${theme.bg} text-white flex items-center justify-center text-3xl font-black shrink-0 shadow-lg ${theme.shadow} group-hover:scale-105 transition-transform z-10 p-3`}>
                         {major.logoUrl ? (
-                            <img src={major.logoUrl} alt={major.code} className="w-full h-full object-contain filter drop-shadow-md" onError={(e) => e.currentTarget.style.display='none'} />
+                            <img src={major.logoUrl} alt={major.code} loading="lazy" decoding="async" className="w-full h-full object-contain filter drop-shadow-md" onError={(e) => e.currentTarget.style.display='none'} />
                         ) : (
                             getDefaultIcon(major.code)
                         )}

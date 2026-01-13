@@ -166,11 +166,11 @@ export const databaseService = {
           if (localData) return JSON.parse(localData);
       } catch (e) {}
       
-      // Defaults if nothing found
+      // Defaults if nothing found (Optimized Sizes)
       return [
-        "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=2070&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=2070&auto=format&fit=crop",
-        "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=2132&auto=format&fit=crop"
+        "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=75&w=1200&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=75&w=1200&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=75&w=1200&auto=format&fit=crop"
       ];
   },
 

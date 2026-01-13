@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { databaseService } from '../services/database';
 import { NewsItem } from '../types';
-import { LoaderIcon, ArrowRightIcon, BookIcon, FacebookIcon, InstagramIcon, YoutubeIcon, TiktokIcon } from './ui/Icons';
+import { LoaderIcon, BookIcon, FacebookIcon, InstagramIcon, YoutubeIcon, TiktokIcon, XIcon } from './ui/Icons';
 
 interface NewsDetailProps {
   id: string;
@@ -67,10 +67,11 @@ export default function NewsDetail({ id }: NewsDetailProps) {
   return (
     <div className="min-h-screen bg-white">
        {/* Simple Header */}
-       <header className="border-b border-slate-100 bg-white sticky top-0 z-50">
-          <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-             <div className="flex items-center gap-3">
-                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-white shadow-sm overflow-hidden ${!schoolLogo ? 'bg-emerald-900' : ''}`}>
+       <header className="border-b border-slate-100 bg-white/90 backdrop-blur-md sticky top-0 z-50 shadow-sm transition-all">
+          <div className="container mx-auto px-6 py-3 flex justify-between items-center">
+             {/* Logo - Clickable to Home */}
+             <a href="/" className="flex items-center gap-3 group">
+                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-white shadow-sm overflow-hidden transition-transform group-hover:scale-105 ${!schoolLogo ? 'bg-emerald-900' : ''}`}>
                     {schoolLogo ? (
                         <img 
                           src={schoolLogo} 
@@ -84,12 +85,19 @@ export default function NewsDetail({ id }: NewsDetailProps) {
                     ) : "M"}
                  </div>
                  <div className="flex flex-col">
-                   <span className="text-sm font-black text-slate-900 uppercase">SMKS Mathlaul Anwar</span>
+                   <span className="text-sm font-black text-slate-900 uppercase group-hover:text-emerald-900 transition-colors">SMKS Mathlaul Anwar</span>
                    <span className="text-[10px] font-bold text-emerald-600 uppercase">Buaranjati</span>
                  </div>
-             </div>
-             <a href="/" className="text-sm font-bold text-slate-500 hover:text-emerald-900 flex items-center gap-2">
-                Beranda <ArrowRightIcon className="w-4 h-4" />
+             </a>
+
+             {/* Elegant Close Button */}
+             <a 
+               href="/" 
+               className="w-10 h-10 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-all shadow-sm active:scale-95"
+               aria-label="Tutup Artikel"
+               title="Kembali ke Beranda"
+             >
+                <XIcon className="w-5 h-5" />
              </a>
           </div>
        </header>

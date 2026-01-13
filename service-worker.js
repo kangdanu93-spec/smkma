@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smkma-portal-v1';
+const CACHE_NAME = 'smkma-portal-v2';
 const urlsToCache = [
   './',
   './index.html',
@@ -6,13 +6,23 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', (event) => {
+  // Perform install steps
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        // Try to cache core files, but don't fail if one is missing (dynamic env)
-        return cache.addAll(urlsToCache).catch(err => console.log('SW Cache error:', err));
+        console.log('Opened cache');
+        // We use map to ensure that if one file fails, others still cache, 
+        // though strictly for PWA 'start_url' must be cached.
+        return Promise.all(
+          urlsToCache.map(url => {
+            return cache.add(url).catch(error => {
+              console.warn('Failed to cache file:', url, error);
+            });
+          })
+        );
       })
   );
+  self.skipWaiting();
 });
 
 self.addEventListener('fetch', (event) => {
@@ -41,4 +51,5 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
+  self.clients.claim();
 });

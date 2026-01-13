@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smkma-portal-v3';
+const CACHE_NAME = 'mysmk-ma-v1';
 const urlsToCache = [
   '/',
   '/index.html',

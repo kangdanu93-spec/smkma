@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { PortalMode } from './types';
-import { HomeIcon, BuildingIcon, BriefcaseIcon, GraduationCapIcon, ClipboardIcon, CheckBadgeIcon, ArrowRightIcon, LockIcon, MicIcon, MapIcon, BrainIcon } from './components/ui/Icons';
+import { HomeIcon, BuildingIcon, BriefcaseIcon, GraduationCapIcon, ClipboardIcon, CheckBadgeIcon, ArrowRightIcon, LockIcon, MicIcon, MapIcon, BrainIcon, ChevronDownIcon } from './components/ui/Icons';
 import LiveInterface from './components/LiveInterface';
 import ChatInterface from './components/ChatInterface';
 import SchoolDashboard from './components/SchoolDashboard';
@@ -9,9 +9,20 @@ import AdminPanel from './components/AdminPanel';
 import NewsDetail from './components/NewsDetail';
 import { databaseService } from './services/database';
 
+interface NavItem {
+  label: string;
+  icon?: any;
+  mode?: PortalMode;
+  special?: string;
+  externalUrl?: string;
+  children?: NavItem[];
+}
+
 export default function App() {
   const [currentMode, setCurrentMode] = useState<PortalMode>(PortalMode.HOME);
   const [newsId, setNewsId] = useState<string | null>(null);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const navRef = useRef<HTMLDivElement>(null);
   
   // OPTIMIZATION: Initialize state from LocalStorage to prevent Logo Flicker/Delay
   const [schoolLogo, setSchoolLogo] = useState<string>(() => {
@@ -42,6 +53,16 @@ export default function App() {
         }
     };
     fetchConfig();
+
+    // Close dropdowns when clicking outside
+    const handleClickOutside = (event: MouseEvent) => {
+        if (navRef.current && !navRef.current.contains(event.target as Node)) {
+            setOpenDropdown(null);
+        }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // If viewing a specific news item, render only NewsDetail
@@ -49,19 +70,59 @@ export default function App() {
     return <NewsDetail id={newsId} />;
   }
 
-  // Navigation Items Config
-  const navItems = [
-    { mode: PortalMode.HOME, icon: HomeIcon, label: "Beranda" },
-    { mode: PortalMode.THINK, icon: BrainIcon, label: "AI Tutor" },
-    { mode: PortalMode.LIVE, icon: MicIcon, label: "Live" },
-    { mode: PortalMode.PROFILE, icon: BuildingIcon, label: "Profil" },
-    { mode: PortalMode.MAJORS, icon: GraduationCapIcon, label: "Jurusan" },
-    { mode: PortalMode.MAPS, icon: MapIcon, label: "Peta" },
-    { mode: PortalMode.BKK, icon: BriefcaseIcon, label: "BKK" },
-    { mode: PortalMode.PPDB, icon: ClipboardIcon, label: "PPDB", special: "emerald" },
-    { mode: PortalMode.UKOM, icon: CheckBadgeIcon, label: "UKOM", special: "amber", externalUrl: "https://pendaftaran-ukom-lemon.vercel.app/" },
-    { mode: PortalMode.ADMIN, icon: LockIcon, label: "Admin" },
+  // Navigation Data Structure (Tiered)
+  const navItems: NavItem[] = [
+    { 
+      label: "Beranda",
+      mode: PortalMode.HOME, 
+      icon: HomeIcon 
+    },
+    {
+      label: "Smart AI",
+      icon: BrainIcon,
+      children: [
+        { label: "AI Tutor", mode: PortalMode.THINK, icon: BrainIcon },
+        { label: "Live Class", mode: PortalMode.LIVE, icon: MicIcon }
+      ]
+    },
+    {
+      label: "Info Sekolah",
+      icon: BuildingIcon,
+      children: [
+        { label: "Profil", mode: PortalMode.PROFILE, icon: BuildingIcon },
+        { label: "Jurusan", mode: PortalMode.MAJORS, icon: GraduationCapIcon },
+        { label: "Peta", mode: PortalMode.MAPS, icon: MapIcon },
+        { label: "Bursa Kerja", mode: PortalMode.BKK, icon: BriefcaseIcon }
+      ]
+    },
+    { 
+      label: "PPDB", 
+      mode: PortalMode.PPDB, 
+      icon: ClipboardIcon, 
+      special: "emerald" 
+    },
+    {
+      label: "Aplikasi",
+      icon: CheckBadgeIcon,
+      children: [
+        { label: "UKOM", mode: PortalMode.UKOM, icon: CheckBadgeIcon, special: "amber", externalUrl: "https://pendaftaran-ukom-lemon.vercel.app/" },
+        { label: "Admin Panel", mode: PortalMode.ADMIN, icon: LockIcon }
+      ]
+    }
   ];
+
+  const handleNavClick = (item: NavItem) => {
+    if (item.children) {
+      setOpenDropdown(openDropdown === item.label ? null : item.label);
+    } else {
+      setOpenDropdown(null);
+      if (item.externalUrl) {
+        window.open(item.externalUrl, '_blank');
+      } else if (item.mode) {
+        setCurrentMode(item.mode);
+      }
+    }
+  };
 
   return (
     <div className="h-screen w-full flex flex-col bg-gradient-to-br from-slate-50 via-slate-100 to-slate-200 text-slate-900 font-sans selection:bg-emerald-200 selection:text-emerald-900">
@@ -95,58 +156,56 @@ export default function App() {
         </div>
 
         {/* Navigation Section */}
-        <nav className="flex items-center gap-1 md:gap-2 ml-4 overflow-x-auto no-scrollbar mask-gradient">
-           {navItems.map((item) => {
-             const isActive = currentMode === item.mode;
+        <nav ref={navRef} className="flex items-center gap-2 ml-4 relative">
+           {navItems.map((item, index) => {
+             // Logic to check if parent is active (if one of its children is selected)
+             const isParentActive = item.children?.some(child => child.mode === currentMode) || item.mode === currentMode;
              
-             // Dynamic Class Logic
-             let baseClass = "flex items-center justify-center gap-2 px-3 py-2 md:px-4 md:py-2 rounded-full text-sm font-bold transition-all duration-300 shrink-0";
+             let buttonClass = "flex items-center justify-center gap-2 px-3 py-2 md:px-4 md:py-2 rounded-full text-sm font-bold transition-all duration-300 shrink-0 select-none";
              
-             // External Link Handling (UKOM)
-             if ((item as any).externalUrl) {
-                // For UKOM/Amber, make it look active/highlighted to serve as CTA
-                const externalClass = item.special === 'amber'
-                   ? "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg shadow-amber-600/20 scale-100 hover:scale-105 hover:shadow-amber-600/30"
-                   : "text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 scale-95 hover:scale-100";
-
-                return (
-                  <a
-                    key={item.mode}
-                    href={(item as any).externalUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`${baseClass} ${externalClass}`}
-                    title={item.label}
-                  >
-                    <item.icon className="w-5 h-5" />
-                    <span className="hidden md:inline">{item.label}</span>
-                  </a>
-                );
-             }
-
-             // Internal Navigation
-             let activeClass = "";
-             let inactiveClass = "text-slate-500 hover:text-slate-800 hover:bg-slate-100/80 scale-95 hover:scale-100";
-
              if (item.special === 'emerald') {
-                activeClass = "bg-gradient-to-r from-emerald-800 to-emerald-900 text-white shadow-lg shadow-emerald-900/20 scale-100";
-             } else if (item.special === 'amber') {
-                activeClass = "bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg shadow-amber-600/20 scale-100";
+                buttonClass += " bg-gradient-to-r from-emerald-800 to-emerald-900 text-white shadow-lg shadow-emerald-900/20 hover:scale-105";
+             } else if (isParentActive || openDropdown === item.label) {
+                buttonClass += " bg-white text-emerald-900 shadow-md ring-1 ring-slate-200";
              } else {
-                activeClass = "bg-white text-emerald-900 shadow-md ring-1 ring-slate-200 scale-100";
+                buttonClass += " text-slate-500 hover:text-slate-800 hover:bg-slate-100/80";
              }
 
              return (
-               <button 
-                 key={item.mode}
-                 onClick={() => setCurrentMode(item.mode)}
-                 className={`${baseClass} ${isActive ? activeClass : inactiveClass}`}
-                 title={item.label}
-               >
-                 <item.icon className="w-5 h-5" />
-                 {/* Label hidden on mobile (screens < md), visible on desktop */}
-                 <span className="hidden md:inline">{item.label}</span>
-               </button>
+               <div key={index} className="relative">
+                 <button 
+                   onClick={() => handleNavClick(item)}
+                   className={buttonClass}
+                   title={item.label}
+                 >
+                   <item.icon className="w-5 h-5" />
+                   <span className="hidden md:inline">{item.label}</span>
+                   {item.children && (
+                     <ChevronDownIcon className={`w-4 h-4 transition-transform duration-200 ${openDropdown === item.label ? 'rotate-180' : ''}`} />
+                   )}
+                 </button>
+
+                 {/* Dropdown Menu */}
+                 {item.children && openDropdown === item.label && (
+                   <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-50 animate-fade-in-up origin-top-right">
+                      {item.children.map((child, cIdx) => {
+                        const isChildActive = child.mode === currentMode;
+                        return (
+                          <button
+                            key={cIdx}
+                            onClick={() => handleNavClick(child)}
+                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors text-left
+                              ${isChildActive ? 'bg-emerald-50 text-emerald-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}
+                            `}
+                          >
+                             {child.icon && <child.icon className="w-4 h-4 opacity-70" />}
+                             {child.label}
+                          </button>
+                        );
+                      })}
+                   </div>
+                 )}
+               </div>
              );
            })}
         </nav>

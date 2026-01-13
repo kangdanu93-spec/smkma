@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PortalMode, PrincipalData, NewsItem, MajorItem } from '../types';
 import { databaseService } from '../services/database';
-import { ArrowRightIcon, BrainIcon, MapIcon, MicIcon, BookIcon, UserIcon, CheckBadgeIcon, FacebookIcon, InstagramIcon, YoutubeIcon, TiktokIcon, LoaderIcon, PaletteIcon, WrenchIcon, BuildingIcon } from './ui/Icons';
+import { ArrowRightIcon, BrainIcon, MapIcon, MicIcon, BookIcon, UserIcon, CheckBadgeIcon, FacebookIcon, InstagramIcon, YoutubeIcon, TiktokIcon, LoaderIcon, PaletteIcon, WrenchIcon, BuildingIcon, NewspaperIcon } from './ui/Icons';
 
 interface SchoolDashboardProps {
   onNavigate: (mode: PortalMode) => void;
@@ -18,12 +18,20 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [majors, setMajors] = useState<MajorItem[]>([]);
   const [loadingNews, setLoadingNews] = useState(true);
+  
+  // Slider State
+  const [heroImages, setHeroImages] = useState<string[]>([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
       // Fetch Principal
       const pData = await databaseService.getPrincipalData();
       if (pData) setPrincipal(pData);
+
+      // Fetch Hero Images
+      const heroes = await databaseService.getHeroImages();
+      setHeroImages(heroes);
 
       // Fetch News
       const nData = await databaseService.getNews();
@@ -37,6 +45,17 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
     };
     fetchData();
   }, []);
+
+  // Auto-slide effect
+  useEffect(() => {
+    if (heroImages.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % heroImages.length);
+    }, 8000); // 8 seconds
+
+    return () => clearInterval(interval);
+  }, [heroImages.length]);
 
   // Helper for Theme Colors
   const getThemeColors = (theme: string) => {
@@ -59,144 +78,187 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
 
   return (
     <div className="w-full h-full overflow-y-auto custom-scrollbar relative">
-      {/* Dynamic Animated Background */}
-      <div className="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-        <div className="absolute top-[10%] left-[5%] w-[400px] h-[400px] bg-emerald-200/20 rounded-full blur-[80px] animate-float"></div>
-        <div className="absolute top-[30%] right-[10%] w-[300px] h-[300px] bg-teal-200/20 rounded-full blur-[80px] animate-float-delayed"></div>
-        <div className="absolute bottom-[10%] left-[20%] w-[350px] h-[350px] bg-indigo-200/20 rounded-full blur-[80px] animate-float"></div>
-      </div>
+      
+      {/* --- HERO SECTION WITH SLIDER --- */}
+      <section className="relative w-full h-[600px] flex flex-col items-center justify-center text-center overflow-hidden">
+        
+        {/* Background Slideshow */}
+        {heroImages.length > 0 && heroImages.map((img, index) => (
+          <div 
+            key={index}
+            className={`absolute inset-0 w-full h-full transition-opacity duration-1000 ease-in-out ${index === currentSlide ? 'opacity-100' : 'opacity-0'}`}
+          >
+             <img src={img} alt="Hero Background" className="w-full h-full object-cover" />
+             {/* Dark Overlay for Text Readability */}
+             <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-[2px]"></div>
+          </div>
+        ))}
 
-      {/* Hero Section */}
-      <section className="relative w-full py-16 md:py-24 px-6 flex flex-col items-center justify-center text-center">
-        <div className="relative z-10 max-w-6xl space-y-8 animate-fade-in-up flex flex-col items-center">
-          <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-white/70 backdrop-blur-md border border-emerald-100 text-emerald-900 text-xs font-bold shadow-sm hover:shadow-md transition-shadow cursor-default ring-1 ring-white/50">
+        {/* Content Content */}
+        <div className="relative z-10 max-w-6xl px-6 space-y-8 animate-fade-in-up flex flex-col items-center">
+          
+          <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-emerald-300 text-xs font-bold shadow-lg cursor-default">
             <span className="relative flex h-2.5 w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-600"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
             </span>
             PPDB 2026 RESMI DIBUKA
           </div>
           
-          <div className="space-y-2 flex flex-col items-center">
-            <span className="block text-orange-500 font-bold text-sm md:text-lg tracking-widest uppercase mb-1">
+          <div className="space-y-4 flex flex-col items-center">
+            <span className="block text-amber-400 font-bold text-sm md:text-lg tracking-[0.2em] uppercase">
               Selamat Datang Di Website
             </span>
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight text-slate-900 leading-[1.1] drop-shadow-sm">
-              <span className="bg-gradient-to-r from-emerald-800 via-teal-600 to-emerald-800 bg-clip-text text-transparent bg-[length:200%_auto] animate-shimmer uppercase">
-                SMKS MATHLAUL ANWAR BUARANJATI
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tight text-white leading-[1.1] drop-shadow-2xl">
+              SMKS MATHLAUL ANWAR <br/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">
+                BUARANJATI
               </span>
             </h1>
           </div>
           
-          <p className="text-lg md:text-xl text-slate-600 max-w-2xl leading-relaxed font-medium mx-auto">
-            Membentuk Generasi Unggul & Berkarakter dengan teknologi masa depan.
+          <p className="text-lg md:text-xl text-slate-200 max-w-2xl leading-relaxed font-medium mx-auto drop-shadow-md">
+            Membentuk Generasi Unggul & Berkarakter dengan teknologi masa depan dan integritas tinggi.
           </p>
           
-          <div className="flex flex-wrap items-center justify-center gap-5 mt-4">
+          <div className="flex flex-wrap items-center justify-center gap-5 mt-6">
              <button 
                onClick={() => onNavigate(PortalMode.THINK)}
-               className="group px-8 py-4 bg-emerald-900 text-white font-bold rounded-xl hover:bg-emerald-800 transition-all shadow-xl shadow-emerald-900/20 hover:shadow-emerald-900/30 hover:-translate-y-1 flex items-center gap-3 active:scale-95"
+               className="group px-8 py-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-all shadow-xl shadow-emerald-900/30 hover:shadow-emerald-900/50 hover:-translate-y-1 flex items-center gap-3 active:scale-95 border-b-4 border-emerald-800 hover:border-emerald-700"
              >
                <BrainIcon className="w-5 h-5 text-emerald-100 group-hover:rotate-12 transition-transform" />
                Tanya Asisten AI
              </button>
              <button 
                onClick={() => onNavigate(PortalMode.PPDB)}
-               className="px-8 py-4 bg-white/80 backdrop-blur-sm text-slate-700 font-bold rounded-xl border border-white hover:border-emerald-200 hover:text-emerald-900 hover:bg-white shadow-lg shadow-slate-200/50 hover:-translate-y-1 transition-all active:scale-95"
+               className="px-8 py-4 bg-white text-slate-900 font-bold rounded-xl border-b-4 border-slate-300 hover:border-white hover:bg-slate-50 shadow-xl hover:-translate-y-1 transition-all active:scale-95"
              >
                Daftar Sekarang
              </button>
           </div>
         </div>
+
+        {/* Slider Indicators - Moved outside content div to be relative to section */}
+        {heroImages.length > 1 && (
+            <div className="absolute bottom-8 z-20 flex gap-2">
+                {heroImages.map((_, idx) => (
+                <button 
+                    key={idx}
+                    onClick={() => setCurrentSlide(idx)}
+                    className={`w-2 h-2 rounded-full transition-all ${idx === currentSlide ? 'bg-emerald-400 w-8' : 'bg-white/30 hover:bg-white'}`}
+                />
+                ))}
+            </div>
+        )}
       </section>
 
-      {/* Features Grid */}
-      <section className="py-12 px-6 max-w-7xl mx-auto">
-        <div className="flex items-center justify-center md:justify-start gap-3 mb-10 animate-fade-in-up delay-100">
-          <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-            <span className="w-8 h-1 bg-emerald-600 rounded-full"></span>
-            Layanan Digital
-          </h2>
-          <div className="h-px bg-gradient-to-r from-slate-200 to-transparent flex-1 ml-4 hidden md:block"></div>
-        </div>
+      {/* --- LATEST NEWS GRID (PREMIUM & ELEGANT) --- */}
+      <section className="py-12 px-6 max-w-7xl mx-auto relative z-20">
+         {/* Section Header */}
+         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
+            <div className="flex items-center gap-4">
+                 <div className="h-12 w-2 bg-gradient-to-b from-emerald-400 to-teal-500 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.5)]"></div>
+                 <div className="space-y-1">
+                    <h3 className="font-black text-slate-900 text-2xl md:text-4xl tracking-tight leading-none">
+                        Berita Terkini
+                    </h3>
+                    <p className="text-slate-500 text-sm md:text-base font-medium">
+                        Update informasi terbaru seputar kegiatan sekolah
+                    </p>
+                 </div>
+            </div>
+            
+            <button className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-emerald-50 border border-emerald-100 rounded-full text-emerald-900 text-sm font-bold hover:bg-emerald-100 transition-all shadow-sm group">
+                Lihat Semua Berita <ArrowRightIcon className="w-4 h-4 group-hover:translate-x-1 transition-transform"/>
+            </button>
+         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Smart Tutor Card */}
-          <div 
-            onClick={() => onNavigate(PortalMode.THINK)}
-            className="group glass-panel rounded-2xl p-6 cursor-pointer hover:-translate-y-2 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-900/10 animate-fade-in-up delay-100 relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/5 rounded-bl-[60px] transition-transform group-hover:scale-110"></div>
-            <div className="w-14 h-14 bg-indigo-50 text-indigo-700 rounded-2xl flex items-center justify-center mb-5 transition-colors group-hover:bg-indigo-600 group-hover:text-white shadow-sm">
-              <BrainIcon className="w-7 h-7" />
-            </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-indigo-700 transition-colors">Smart Tutor</h3>
-            <p className="text-slate-500 text-sm leading-relaxed mb-6">
-              Asisten belajar cerdas berbasis AI untuk bantuan akademik 24/7.
-            </p>
-            <div className="flex items-center text-indigo-700 font-bold text-xs mt-auto opacity-70 group-hover:opacity-100 transition-opacity">
-              Akses Sekarang <ArrowRightIcon className="w-3 h-3 ml-2 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {loadingNews ? (
+                // Elegant Skeletons
+                 [...Array(3)].map((_, i) => (
+                    <div key={i} className="bg-white rounded-3xl overflow-hidden h-96 animate-pulse shadow-2xl border border-white/50">
+                        <div className="w-full h-64 bg-slate-200"></div>
+                        <div className="p-8 space-y-4">
+                            <div className="h-4 bg-slate-200 rounded-full w-1/3 mb-2"></div>
+                            <div className="h-8 bg-slate-200 rounded-lg w-full"></div>
+                            <div className="h-4 bg-slate-200 rounded-full w-2/3 mt-4"></div>
+                        </div>
+                    </div>
+                ))
+            ) : news.length === 0 ? (
+                <div className="col-span-3 bg-white/95 backdrop-blur rounded-3xl p-16 text-center border border-slate-200 shadow-2xl flex flex-col items-center justify-center">
+                    <NewspaperIcon className="w-16 h-16 text-slate-300 mb-4" />
+                    <p className="text-slate-500 text-lg font-medium">Belum ada berita terbaru saat ini.</p>
+                </div>
+            ) : (
+                news.slice(0, 3).map((item, index) => (
+                    <a 
+                        key={item.id}
+                        href={`?news_id=${item.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`group bg-white rounded-[2rem] overflow-hidden cursor-pointer hover:-translate-y-3 hover:shadow-2xl hover:shadow-emerald-900/10 transition-all duration-500 shadow-xl border border-slate-100 flex flex-col h-full opacity-0 animate-fade-in-up`}
+                        style={{ animationDelay: `${index * 150}ms`, animationFillMode: 'forwards' }}
+                    >
+                        {/* Image Area - Full Bleed & Large */}
+                        <div className="w-full h-72 bg-slate-100 relative overflow-hidden shrink-0">
+                            {item.imageUrl ? (
+                                <img src={item.imageUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ease-in-out" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-slate-50 text-slate-300">
+                                    <NewspaperIcon className="w-20 h-20 opacity-50" />
+                                </div>
+                            )}
+                            
+                            {/* Overlay Gradient */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-500"></div>
 
-          {/* Live Class Card */}
-          <div 
-            onClick={() => onNavigate(PortalMode.LIVE)}
-            className="group glass-panel rounded-2xl p-6 cursor-pointer hover:-translate-y-2 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-900/10 animate-fade-in-up delay-200 relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 w-24 h-24 bg-rose-500/5 rounded-bl-[60px] transition-transform group-hover:scale-110"></div>
-            <div className="w-14 h-14 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mb-5 transition-colors group-hover:bg-rose-600 group-hover:text-white shadow-sm">
-              <MicIcon className="w-7 h-7" />
-            </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-rose-600 transition-colors">Kelas Live</h3>
-            <p className="text-slate-500 text-sm leading-relaxed mb-6">
-              Interaksi langsung dengan pengajar melalui video conference.
-            </p>
-            <div className="flex items-center text-rose-600 font-bold text-xs mt-auto opacity-70 group-hover:opacity-100 transition-opacity">
-              Mulai Sesi <ArrowRightIcon className="w-3 h-3 ml-2 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </div>
+                            {/* Floating Category Badge */}
+                            <div className="absolute top-5 left-5">
+                                 <span className="px-4 py-1.5 bg-white/90 backdrop-blur-xl text-emerald-950 text-[10px] font-black uppercase tracking-widest rounded-full shadow-lg border border-white/60 flex items-center gap-2 group-hover:bg-emerald-500 group-hover:text-white transition-colors duration-300">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 group-hover:bg-white animate-pulse"></span>
+                                    {item.category}
+                                 </span>
+                            </div>
+                        </div>
+                        
+                        {/* Content */}
+                        <div className="p-8 flex flex-col flex-1 relative bg-white">
+                            {/* Decorative Elements */}
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-50 to-transparent rounded-bl-[100px] opacity-50 group-hover:opacity-100 transition-opacity"></div>
 
-          {/* Maps Card */}
-          <div 
-            onClick={() => onNavigate(PortalMode.MAPS)}
-            className="group glass-panel rounded-2xl p-6 cursor-pointer hover:-translate-y-2 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-900/10 animate-fade-in-up delay-300 relative overflow-hidden"
-          >
-            <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-bl-[60px] transition-transform group-hover:scale-110"></div>
-            <div className="w-14 h-14 bg-emerald-50 text-emerald-700 rounded-2xl flex items-center justify-center mb-5 transition-colors group-hover:bg-emerald-600 group-hover:text-white shadow-sm">
-              <MapIcon className="w-7 h-7" />
-            </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-emerald-700 transition-colors">Peta Lokasi</h3>
-            <p className="text-slate-500 text-sm leading-relaxed mb-6">
-              Navigasi area sekolah dan informasi fasilitas gedung.
-            </p>
-            <div className="flex items-center text-emerald-700 font-bold text-xs mt-auto opacity-70 group-hover:opacity-100 transition-opacity">
-              Buka Peta <ArrowRightIcon className="w-3 h-3 ml-2 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </div>
+                            <div className="flex items-center gap-3 mb-4 text-xs font-bold text-slate-400 relative z-10">
+                               <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                                   <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                   </svg>
+                                   {new Date(item.date).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}
+                               </div>
+                            </div>
+                            
+                            <h3 className="text-xl md:text-2xl font-black text-slate-900 mb-4 leading-snug group-hover:text-emerald-800 transition-colors line-clamp-2 relative z-10">
+                                {item.title}
+                            </h3>
+                            
+                            <p className="text-slate-500 line-clamp-3 mb-8 text-sm leading-relaxed relative z-10 font-medium">
+                                {item.content.replace(/<[^>]+>/g, '')}
+                            </p>
 
-          {/* UKOM Card - UPDATED TO EXTERNAL LINK */}
-          <div 
-            onClick={() => window.open('https://pendaftaran-ukom-lemon.vercel.app/', '_blank')}
-            className="group glass-panel rounded-2xl p-6 cursor-pointer hover:-translate-y-2 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-900/10 animate-fade-in-up delay-300 relative overflow-hidden border-amber-100/50"
-          >
-            <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-bl-[60px] transition-transform group-hover:scale-110"></div>
-            <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center mb-5 transition-colors group-hover:bg-amber-500 group-hover:text-white shadow-sm">
-              <CheckBadgeIcon className="w-7 h-7" />
-            </div>
-            <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-amber-600 transition-colors">E-UKOM</h3>
-            <p className="text-slate-500 text-sm leading-relaxed mb-6">
-              Sistem pendaftaran Uji Kompetensi Keahlian siswa.
-            </p>
-            <div className="flex items-center text-amber-600 font-bold text-xs mt-auto opacity-70 group-hover:opacity-100 transition-opacity">
-              Login Aplikasi <ArrowRightIcon className="w-3 h-3 ml-2 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </div>
-
+                            <div className="mt-auto pt-6 border-t border-slate-100 flex items-center justify-between group/btn relative z-10">
+                                <span className="text-sm font-black text-emerald-900 group-hover:text-emerald-600 transition-colors uppercase tracking-wide text-[10px]">Baca Selengkapnya</span>
+                                <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-emerald-900 group-hover:text-white transition-all duration-300 shadow-sm group-hover:shadow-emerald-900/30 group-hover:scale-110">
+                                     <ArrowRightIcon className="w-5 h-5 group-hover:-rotate-45 transition-transform duration-300" />
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                ))
+            )}
         </div>
       </section>
 
-      {/* Info Section - SAMBUTAN REDESIGN */}
+      {/* --- INFO SECTION (Principal & Majors) --- */}
       <section className="py-20 px-6 bg-white overflow-hidden animate-fade-in-up delay-300">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <div className="space-y-6 order-2 lg:order-1">
@@ -267,7 +329,7 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
                         className={`group p-5 bg-white rounded-2xl border border-slate-100 ${theme.border} flex items-center gap-6 shadow-sm hover:shadow-xl hover:-translate-x-1 transition-all cursor-pointer relative overflow-hidden`}
                     >
                         <div className={`absolute top-0 right-0 w-24 h-24 ${theme.blur} rounded-full blur-2xl -mr-10 -mt-10 transition-colors`}></div>
-                        {/* Increased Container Size to w-24 h-24 (from w-20) and p-3 (from p-2) for bigger logo */}
+                        {/* Container Size w-24 h-24 */}
                         <div className={`w-24 h-24 rounded-xl bg-gradient-to-br ${theme.bg} text-white flex items-center justify-center text-3xl font-black shrink-0 shadow-lg ${theme.shadow} group-hover:scale-105 transition-transform z-10 p-3`}>
                         {major.logoUrl ? (
                             <img src={major.logoUrl} alt={major.code} className="w-full h-full object-contain filter drop-shadow-md" onError={(e) => e.currentTarget.style.display='none'} />
@@ -286,108 +348,87 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
         </div>
       </section>
 
-       {/* News Preview */}
-       <section className="py-20 px-6 max-w-7xl mx-auto animate-fade-in-up delay-300">
-        <div className="flex justify-between items-end mb-12">
-           <div>
-             <h2 className="text-3xl font-bold text-slate-900">Berita Terbaru</h2>
-             <div className="h-1.5 w-24 bg-gradient-to-r from-emerald-600 to-teal-400 rounded-full mt-4"></div>
-           </div>
-           <button className="text-emerald-800 text-sm font-bold hover:text-emerald-950 flex items-center gap-2 px-4 py-2 hover:bg-emerald-50 rounded-lg transition-colors">
-             Arsip Berita <ArrowRightIcon className="w-4 h-4" />
-           </button>
-        </div>
-        
-        {loadingNews ? (
-             <div className="flex justify-center items-center py-20 text-emerald-900">
-                <LoaderIcon className="w-10 h-10 animate-spin" />
-             </div>
-        ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {news.length === 0 ? (
-                <div className="col-span-3 text-center py-10 bg-slate-50 rounded-xl border border-dashed border-slate-300 text-slate-500">
-                    Belum ada berita terbaru saat ini.
+       <footer className="bg-slate-900 pt-16 pb-8 border-t border-slate-800 text-slate-300">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
+                
+                {/* Column 1: School Info */}
+                <div className="space-y-6">
+                    <div className="space-y-4">
+                      <h3 className="text-xl font-bold text-white">SMKS Mathlaul Anwar Buaranjati</h3>
+                      <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
+                          SMKS Mathlaul Anwar Buaranjati adalah institusi pendidikan unggulan yang berfokus pada karakter, teknologi, dan prestasi akademik.
+                      </p>
+                    </div>
+                    <div className="flex gap-4">
+                        {[
+                          { Icon: FacebookIcon, label: "Facebook" },
+                          { Icon: InstagramIcon, label: "Instagram" },
+                          { Icon: YoutubeIcon, label: "YouTube" },
+                          { Icon: TiktokIcon, label: "TikTok" }
+                        ].map((social, idx) => (
+                          <a key={idx} href="#" aria-label={social.label} className="text-slate-400 hover:text-emerald-400 transition-colors">
+                            <social.Icon className="w-5 h-5" />
+                          </a>
+                        ))}
+                    </div>
                 </div>
-            ) : (
-                news.slice(0, 3).map((item) => (
-                <a 
-                    key={item.id} 
-                    href={`?news_id=${item.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group bg-white rounded-2xl overflow-hidden border border-slate-100 hover:border-emerald-200 shadow-sm hover:shadow-2xl hover:shadow-emerald-900/10 transition-all duration-500 hover:-translate-y-2 flex flex-col h-full cursor-pointer"
-                >
-                    <div className="h-56 bg-slate-100 w-full flex items-center justify-center text-slate-300 group-hover:bg-slate-50 transition-colors relative overflow-hidden shrink-0">
-                        {item.imageUrl ? (
-                            <img 
-                                src={item.imageUrl} 
-                                alt={item.title} 
-                                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 relative z-10" 
-                                onError={(e) => {
-                                    e.currentTarget.style.display = 'none';
-                                }}
-                            />
-                        ) : (
-                             <BookIcon className="w-16 h-16 text-slate-300 group-hover:text-emerald-200 group-hover:scale-110 transition-all duration-500" />
-                        )}
-                        
-                        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 via-transparent to-transparent opacity-60 group-hover:opacity-40 transition-opacity z-20"></div>
-                        
-                        {/* Category Badge Floating on Image */}
-                        <div className="absolute top-4 left-4 z-30">
-                            <span className="px-3 py-1 bg-white/90 backdrop-blur-md text-emerald-900 text-[10px] font-bold uppercase tracking-wider rounded-full shadow-lg border border-white/50">
-                                {item.category}
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div className="p-6 flex flex-col flex-1">
-                         <div className="flex items-center gap-2 mb-3 text-xs text-slate-400 font-medium">
-                            <span className="flex items-center gap-1.5">
-                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
-                                {new Date(item.date).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}
-                            </span>
-                         </div>
 
-                        {/* Title - FULL */}
-                        <h3 className="text-xl font-bold text-slate-900 mb-3 leading-snug group-hover:text-emerald-700 transition-colors">
-                            {item.title}
-                        </h3>
-                        
-                        <p className="text-sm text-slate-500 line-clamp-3 mb-6 leading-relaxed flex-1">
-                            {item.content.replace(/<[^>]+>/g, '')}
-                        </p>
-                        
-                        <div className="pt-4 border-t border-slate-100 mt-auto flex justify-between items-center">
-                            <span className="text-sm font-bold text-emerald-700 flex items-center gap-2 group-hover:gap-3 transition-all">
-                                Baca Selengkapnya <ArrowRightIcon className="w-4 h-4" />
-                            </span>
-                        </div>
-                    </div>
-                </a>
-                ))
-            )}
-            </div>
-        )}
-       </section>
+                {/* Column 2: Contact */}
+                <div className="space-y-6">
+                    <h3 className="text-xl font-bold text-white">Hubungi Kami</h3>
+                    <ul className="space-y-4 text-sm">
+                        <li className="flex items-start gap-3">
+                            <MapIcon className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                            <span className="leading-relaxed">JL. Raya Mauk Km. 16 Kec. Sukadiri Kab. Tangerang, Banten 15530</span>
+                        </li>
+                        <li className="flex items-center gap-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-emerald-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                            <span>(021) 5937-1234</span>
+                        </li>
+                        <li className="flex items-center gap-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-emerald-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"></rect><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path></svg>
+                            <span>info@smkma-buaranjati.sch.id</span>
+                        </li>
+                    </ul>
+                </div>
 
-       <footer className="py-12 bg-slate-900 text-center text-white relative overflow-hidden border-t border-slate-800">
-          <div className="relative z-10 container mx-auto px-6">
-            <h3 className="font-bold text-2xl mb-8 tracking-wider">Follow Us</h3>
-            <div className="flex justify-center gap-4 sm:gap-6 mb-12">
-               {[
-                 { Icon: FacebookIcon, label: "Facebook" },
-                 { Icon: InstagramIcon, label: "Instagram" },
-                 { Icon: YoutubeIcon, label: "YouTube" },
-                 { Icon: TiktokIcon, label: "TikTok" }
-               ].map((social, idx) => (
-                 <div key={idx} aria-label={social.label} className="w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center border-2 border-white/20 rounded-lg text-white/20 cursor-not-allowed transition-all duration-300">
-                   <social.Icon className="w-7 h-7 sm:w-8 sm:h-8" />
-                 </div>
-               ))}
+                {/* Column 3: Quick Links */}
+                <div className="space-y-6">
+                    <h3 className="text-xl font-bold text-white">Tautan Cepat</h3>
+                    <ul className="space-y-3 text-sm">
+                        <li>
+                          <button onClick={() => onNavigate(PortalMode.MAJORS)} className="text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-2">
+                             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> Program Studi
+                          </button>
+                        </li>
+                        <li>
+                          <button onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})} className="text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-2">
+                             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> Beranda
+                          </button>
+                        </li>
+                        <li>
+                          <button onClick={() => onNavigate(PortalMode.PPDB)} className="text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-2">
+                             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> Pendaftaran (PPDB)
+                          </button>
+                        </li>
+                        <li>
+                          <button onClick={() => onNavigate(PortalMode.BKK)} className="text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-2">
+                             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> Bursa Kerja (BKK)
+                          </button>
+                        </li>
+                        <li>
+                          <button onClick={() => onNavigate(PortalMode.ADMIN)} className="text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-2">
+                             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> Login Admin
+                          </button>
+                        </li>
+                    </ul>
+                </div>
             </div>
-            <div className="w-full h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent mb-8 max-w-2xl mx-auto"></div>
-            <p className="text-slate-500 text-sm">&copy; 2026 SMKS Mathlaul Anwar Buaranjati. All Rights Reserved.</p>
+
+            <div className="pt-8 border-t border-slate-800 text-center">
+                <p className="text-slate-500 text-sm">&copy; 2026 SMKS Mathlaul Anwar Buaranjati. All Rights Reserved.</p>
+            </div>
           </div>
        </footer>
     </div>

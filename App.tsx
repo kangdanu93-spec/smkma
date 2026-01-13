@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PortalMode } from './types';
-import { HomeIcon, BuildingIcon, BriefcaseIcon, GraduationCapIcon, ClipboardIcon, CheckBadgeIcon, ArrowRightIcon, LockIcon } from './components/ui/Icons';
+import { HomeIcon, BuildingIcon, BriefcaseIcon, GraduationCapIcon, ClipboardIcon, CheckBadgeIcon, ArrowRightIcon, LockIcon, MicIcon, MapIcon, BrainIcon } from './components/ui/Icons';
 import LiveInterface from './components/LiveInterface';
 import ChatInterface from './components/ChatInterface';
 import SchoolDashboard from './components/SchoolDashboard';
@@ -40,8 +40,11 @@ export default function App() {
   // Navigation Items Config
   const navItems = [
     { mode: PortalMode.HOME, icon: HomeIcon, label: "Beranda" },
+    { mode: PortalMode.THINK, icon: BrainIcon, label: "AI Tutor" },
+    { mode: PortalMode.LIVE, icon: MicIcon, label: "Live" },
     { mode: PortalMode.PROFILE, icon: BuildingIcon, label: "Profil" },
     { mode: PortalMode.MAJORS, icon: GraduationCapIcon, label: "Jurusan" },
+    { mode: PortalMode.MAPS, icon: MapIcon, label: "Peta" },
     { mode: PortalMode.BKK, icon: BriefcaseIcon, label: "BKK" },
     { mode: PortalMode.PPDB, icon: ClipboardIcon, label: "PPDB", special: "emerald" },
     { mode: PortalMode.UKOM, icon: CheckBadgeIcon, label: "UKOM", special: "amber", externalUrl: "https://pendaftaran-ukom-lemon.vercel.app/" },

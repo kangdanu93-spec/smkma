@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { databaseService } from '../services/database';
 import { PrincipalData, NewsItem, MajorItem } from '../types';
-import { UserIcon, CheckBadgeIcon, LoaderIcon, LockIcon, LogOutIcon, NewspaperIcon, PlusIcon, EditIcon, TrashIcon, XIcon, BookIcon, GraduationCapIcon, BuildingIcon, BoldIcon, ItalicIcon, UnderlineIcon, ListIcon, ListOrderedIcon } from './ui/Icons';
+import { UserIcon, CheckBadgeIcon, LoaderIcon, LockIcon, LogOutIcon, NewspaperIcon, PlusIcon, EditIcon, TrashIcon, XIcon, BookIcon, GraduationCapIcon, BuildingIcon, BoldIcon, ItalicIcon, UnderlineIcon, ListIcon, ListOrderedIcon, ImageIcon } from './ui/Icons';
 
 // Helper to clean up URLs
 const processImageUrl = (url: string) => {
@@ -29,22 +29,18 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeh
     // Initialize content
     useEffect(() => {
         if (editorRef.current && value !== editorRef.current.innerHTML) {
-            // Only update if significantly different to prevent cursor jumping
-            // A simple check is usually enough for this basic usage
              if (editorRef.current.innerText.trim() === '' && value === '') {
                  editorRef.current.innerHTML = '';
              } else if (value && editorRef.current.innerHTML === '') {
                  editorRef.current.innerHTML = value;
              }
         }
-    }, []); // Run once on mount
+    }, []);
 
     const execCmd = (command: string, value: string | undefined = undefined) => {
         document.execCommand(command, false, value);
         if (editorRef.current) {
             onChange(editorRef.current.innerHTML);
-            // Focusing back is generally handled by keeping selection via preventDefault on mousedown
-            // editorRef.current.focus(); 
         }
     };
 
@@ -99,7 +95,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeh
 export default function AdminPanel() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'principal' | 'news' | 'majors'>('principal');
+  const [activeTab, setActiveTab] = useState<'principal' | 'news' | 'majors' | 'banner'>('principal');
   const [showHelp, setShowHelp] = useState(false);
 
   // Login Form State
@@ -151,6 +147,10 @@ export default function AdminPanel() {
   const [skillsString, setSkillsString] = useState('');
   const [careersString, setCareersString] = useState('');
 
+  // Banner/Hero Images State
+  const [heroImages, setHeroImages] = useState<string[]>([]);
+  const [newHeroImage, setNewHeroImage] = useState('');
+
   useEffect(() => {
     // Check session storage on mount
     const authStatus = sessionStorage.getItem('admin_authenticated');
@@ -197,9 +197,12 @@ export default function AdminPanel() {
         });
     }
 
-    // Load News & Majors
+    // Load News, Majors, and Hero Images
     await loadNews();
     await loadMajors();
+    const heroes = await databaseService.getHeroImages();
+    setHeroImages(heroes);
+    
     setLoading(false);
   };
 
@@ -214,7 +217,7 @@ export default function AdminPanel() {
   };
 
   // --- Image Input Handler ---
-  const handleImageInput = (value: string, type: 'principal' | 'news' | 'major' | 'logo') => {
+  const handleImageInput = (value: string, type: 'principal' | 'news' | 'major' | 'logo' | 'hero') => {
       setImgError(false); 
       const processed = processImageUrl(value);
       
@@ -235,6 +238,8 @@ export default function AdminPanel() {
           setCurrentNews({ ...currentNews, imageUrl: processed });
       } else if (type === 'major') {
           setCurrentMajor({ ...currentMajor, logoUrl: processed });
+      } else if (type === 'hero') {
+          setNewHeroImage(processed);
       }
   };
 
@@ -348,6 +353,26 @@ export default function AdminPanel() {
     setSaving(false);
   };
 
+  // --- Banner/Hero Handlers ---
+  const handleAddHeroImage = async () => {
+      if (!newHeroImage) return;
+      const updated = [...heroImages, newHeroImage];
+      setHeroImages(updated);
+      setNewHeroImage('');
+      setImgWarning('');
+      await databaseService.updateHeroImages(updated);
+      setSuccessMsg('Banner berhasil ditambahkan!');
+      setTimeout(() => setSuccessMsg(''), 3000);
+  };
+
+  const handleDeleteHeroImage = async (index: number) => {
+      if(confirm('Hapus gambar banner ini?')) {
+          const updated = heroImages.filter((_, i) => i !== index);
+          setHeroImages(updated);
+          await databaseService.updateHeroImages(updated);
+      }
+  };
+
   if (authLoading) return null;
 
   if (!isAuthenticated) {
@@ -399,6 +424,9 @@ export default function AdminPanel() {
             <div className="flex px-6 gap-6 overflow-x-auto">
                 <button onClick={() => setActiveTab('principal')} className={`pb-4 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'principal' ? 'border-emerald-600 text-emerald-900' : 'border-transparent text-slate-500'}`}>
                     <BuildingIcon className="w-4 h-4"/> Konfigurasi Sekolah
+                </button>
+                <button onClick={() => setActiveTab('banner')} className={`pb-4 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'banner' ? 'border-emerald-600 text-emerald-900' : 'border-transparent text-slate-500'}`}>
+                    <ImageIcon className="w-4 h-4"/> Manajemen Banner
                 </button>
                 <button onClick={() => setActiveTab('news')} className={`pb-4 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${activeTab === 'news' ? 'border-emerald-600 text-emerald-900' : 'border-transparent text-slate-500'}`}>
                     <NewspaperIcon className="w-4 h-4"/> Manajemen Berita
@@ -476,7 +504,64 @@ export default function AdminPanel() {
             </form>
           )}
 
-          {/* TAB 2: NEWS MANAGEMENT */}
+          {/* TAB 2: HERO / BANNER MANAGEMENT */}
+          {activeTab === 'banner' && (
+              <div className="animate-fade-in-up space-y-8">
+                  <div className="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                      <h4 className="font-bold text-lg text-slate-800 mb-4">Tambah Gambar Banner</h4>
+                      <div className="flex flex-col md:flex-row gap-4 items-start">
+                          <div className="w-full flex-1">
+                              <input 
+                                  type="text" 
+                                  placeholder="Masukkan URL Gambar (Google Drive / Direct Link)" 
+                                  value={newHeroImage} 
+                                  onChange={(e) => handleImageInput(e.target.value, 'hero')} 
+                                  className="w-full px-4 py-3 rounded-lg border border-slate-200"
+                              />
+                              {imgWarning && <p className="text-xs text-amber-600 mt-1">{imgWarning}</p>}
+                          </div>
+                          <button onClick={handleAddHeroImage} disabled={!newHeroImage} className="px-6 py-3 bg-emerald-900 text-white font-bold rounded-lg hover:bg-emerald-800 disabled:opacity-50 whitespace-nowrap">
+                              <PlusIcon className="w-5 h-5 inline mr-2" /> Tambah
+                          </button>
+                      </div>
+                  </div>
+
+                  <div>
+                      <h4 className="font-bold text-lg text-slate-800 mb-4">Daftar Banner Aktif ({heroImages.length})</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {heroImages.length === 0 ? (
+                              <div className="col-span-2 text-center py-10 text-slate-400 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                                  Belum ada gambar banner kustom. Menggunakan gambar default.
+                              </div>
+                          ) : (
+                              heroImages.map((img, idx) => (
+                                  <div key={`${img}-${idx}`} className="group relative aspect-video bg-slate-100 rounded-xl overflow-hidden shadow-sm border border-slate-200 isolate">
+                                      <img src={img} alt={`Banner ${idx}`} className="w-full h-full object-cover relative z-0" />
+                                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10">
+                                          <button 
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                handleDeleteHeroImage(idx);
+                                              }}
+                                              className="px-4 py-2 bg-rose-600 text-white rounded-lg font-bold hover:bg-rose-700 flex items-center gap-2 transform translate-y-4 group-hover:translate-y-0 transition-all cursor-pointer shadow-lg"
+                                          >
+                                              <TrashIcon className="w-4 h-4" /> Hapus
+                                          </button>
+                                      </div>
+                                      <div className="absolute top-2 left-2 px-2 py-1 bg-black/50 text-white text-xs rounded font-mono z-20">
+                                          Slide #{idx + 1}
+                                      </div>
+                                  </div>
+                              ))
+                          )}
+                      </div>
+                  </div>
+              </div>
+          )}
+
+          {/* TAB 3: NEWS MANAGEMENT */}
           {activeTab === 'news' && (
               <div className="animate-fade-in-up">
                   <div className="flex justify-between items-center mb-6">
@@ -550,7 +635,7 @@ export default function AdminPanel() {
               </div>
           )}
 
-          {/* TAB 3: MAJORS MANAGEMENT */}
+          {/* TAB 4: MAJORS MANAGEMENT */}
           {activeTab === 'majors' && (
             <div className="animate-fade-in-up">
               <div className="flex justify-between items-center mb-6">

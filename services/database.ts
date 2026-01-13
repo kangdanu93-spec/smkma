@@ -43,11 +43,13 @@ const CONFIG_COLLECTION = 'school_config';
 const NEWS_COLLECTION = 'school_news';
 const MAJORS_COLLECTION = 'school_majors';
 const PRINCIPAL_DOC_ID = 'principal_data';
+const HERO_DOC_ID = 'hero_images';
 
 const LOCAL_STORAGE_REGISTRANTS_KEY = 'ppdb_registrants_local';
 const LOCAL_STORAGE_PRINCIPAL_KEY = 'principal_data_local';
 const LOCAL_STORAGE_NEWS_KEY = 'school_news_local';
 const LOCAL_STORAGE_MAJORS_KEY = 'school_majors_local';
+const LOCAL_STORAGE_HERO_KEY = 'hero_images_local';
 
 export const databaseService = {
   // --- PPDB ---
@@ -146,6 +148,46 @@ export const databaseService = {
     } catch (e) {
       return firebaseSuccess;
     }
+  },
+
+  // --- HERO IMAGES / BANNER ---
+  getHeroImages: async (): Promise<string[]> => {
+      if (isFirebaseInitialized && db) {
+          try {
+              const docRef = doc(db, CONFIG_COLLECTION, HERO_DOC_ID);
+              const docSnap = await getDoc(docRef);
+              if (docSnap.exists() && docSnap.data().images) {
+                  return docSnap.data().images as string[];
+              }
+          } catch (e) {}
+      }
+      try {
+          const localData = localStorage.getItem(LOCAL_STORAGE_HERO_KEY);
+          if (localData) return JSON.parse(localData);
+      } catch (e) {}
+      
+      // Defaults if nothing found
+      return [
+        "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=2070&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=2070&auto=format&fit=crop",
+        "https://images.unsplash.com/photo-1509062522246-3755977927d7?q=80&w=2132&auto=format&fit=crop"
+      ];
+  },
+
+  updateHeroImages: async (images: string[]): Promise<boolean> => {
+      let firebaseSuccess = false;
+      if (isFirebaseInitialized && db) {
+          try {
+              await setDoc(doc(db, CONFIG_COLLECTION, HERO_DOC_ID), { images });
+              firebaseSuccess = true;
+          } catch (e) {}
+      }
+      try {
+          localStorage.setItem(LOCAL_STORAGE_HERO_KEY, JSON.stringify(images));
+          return true;
+      } catch (e) {
+          return firebaseSuccess;
+      }
   },
 
   // --- BERITA / NEWS ---
@@ -297,8 +339,6 @@ export const databaseService = {
       const existingData = localStorage.getItem(LOCAL_STORAGE_MAJORS_KEY);
       if (existingData) {
         const parsedData = JSON.parse(existingData);
-        // Simple migration if AP is missing but MPLB exists (optional, mostly for current session)
-        // You can comment this out if you want to strictly rely on what is in storage
         return parsedData;
       } else {
         // Return Default Data if completely empty (First Run)
@@ -397,6 +437,7 @@ export const databaseService = {
     localStorage.removeItem(LOCAL_STORAGE_PRINCIPAL_KEY);
     localStorage.removeItem(LOCAL_STORAGE_NEWS_KEY);
     localStorage.removeItem(LOCAL_STORAGE_MAJORS_KEY);
+    localStorage.removeItem(LOCAL_STORAGE_HERO_KEY);
     console.log("Local database cleared.");
   }
 };

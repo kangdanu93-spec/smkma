@@ -3,7 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    
+    <!-- PWA Settings -->
     <title>SMKS MATHLAUL ANWAR BUARANJATI</title>
+    <meta name="theme-color" content="#064e3b" />
+    <meta name="description" content="Portal Digital SMKS Mathlaul Anwar Buaranjati - PPDB, Smart Tutor, dan Informasi Sekolah.">
+    <link rel="manifest" href="manifest.json" />
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2997/2997235.png">
+    
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <style>
       body {
@@ -116,6 +123,18 @@
 </head>
   <body>
     <div id="root"></div>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./service-worker.js')
+            .then((registration) => {
+              console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            }, (err) => {
+              console.log('ServiceWorker registration failed: ', err);
+            });
+        });
+      }
+    </script>
   <script type="module" src="/index.tsx"></script>
 </body>
 </html>

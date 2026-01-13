@@ -1,18 +1,15 @@
-const CACHE_NAME = 'smkma-portal-v2';
+const CACHE_NAME = 'smkma-portal-v3';
 const urlsToCache = [
-  './',
-  './index.html',
-  './manifest.json'
+  '/',
+  '/index.html',
+  '/manifest.json'
 ];
 
 self.addEventListener('install', (event) => {
-  // Perform install steps
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('Opened cache');
-        // We use map to ensure that if one file fails, others still cache, 
-        // though strictly for PWA 'start_url' must be cached.
         return Promise.all(
           urlsToCache.map(url => {
             return cache.add(url).catch(error => {
@@ -26,14 +23,26 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const request = event.request;
+
+  // SPA Navigation Fallback: 
+  // If the request is a navigation (opening the app), always serve index.html
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      caches.match('/index.html').then((response) => {
+        return response || fetch(request);
+      }).catch(() => {
+        return fetch(request);
+      })
+    );
+    return;
+  }
+
+  // Standard Cache Strategy for other assets
   event.respondWith(
-    caches.match(event.request)
+    caches.match(request)
       .then((response) => {
-        // Cache hit - return response
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
+        return response || fetch(request);
       })
   );
 });

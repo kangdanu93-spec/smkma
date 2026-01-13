@@ -1,5 +1,5 @@
 {
-  "id": "/index.html",
+  "id": "/",
   "short_name": "PORTAL SMK-MA",
   "name": "PORTAL SMK-MA",
   "description": "Portal Digital SMKS Mathlaul Anwar Buaranjati",
@@ -17,7 +17,8 @@
       "purpose": "any maskable"
     }
   ],
-  "start_url": "./index.html",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "theme_color": "#064e3b",
   "background_color": "#ffffff",

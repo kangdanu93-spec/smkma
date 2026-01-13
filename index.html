@@ -23,8 +23,9 @@
     <meta property="twitter:description" content="Portal Resmi SMKS Mathlaul Anwar Buaranjati. Akses PPDB Online, AI Tutor, Jadwal, dan Informasi Sekolah dalam satu aplikasi." />
     <meta property="twitter:image" content="https://cdn-icons-png.flaticon.com/512/2997/2997235.png" />
 
-    <link rel="manifest" href="manifest.json" />
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2997/2997235.png">
+    <!-- ID added for dynamic updates -->
+    <link rel="manifest" href="manifest.json" id="manifest-link" />
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2997/2997235.png" id="apple-icon">
     
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <style>
@@ -138,6 +139,68 @@
 </head>
   <body>
     <div id="root"></div>
+    
+    <!-- Dynamic Manifest Script: Updates PWA Icon based on Admin Settings -->
+    <script>
+      (function() {
+        try {
+          // Read cached school config from LocalStorage (set by AdminPanel)
+          var localData = localStorage.getItem('principal_data_local');
+          if (localData) {
+            var data = JSON.parse(localData);
+            if (data.schoolLogoUrl) {
+              console.log("Customizing PWA Icon with:", data.schoolLogoUrl);
+              
+              // 1. Construct Dynamic Manifest
+              var dynamicManifest = {
+                "id": "/",
+                "short_name": "PORTAL SMK-MA",
+                "name": "PORTAL SMK-MA",
+                "description": "Portal Digital SMKS Mathlaul Anwar Buaranjati",
+                "start_url": "/",
+                "scope": "/",
+                "display": "standalone",
+                "theme_color": "#064e3b",
+                "background_color": "#ffffff",
+                "orientation": "portrait",
+                "icons": [
+                  {
+                    "src": data.schoolLogoUrl,
+                    "sizes": "192x192",
+                    "type": "image/png",
+                    "purpose": "any maskable"
+                  },
+                  {
+                    "src": data.schoolLogoUrl,
+                    "sizes": "512x512",
+                    "type": "image/png",
+                    "purpose": "any maskable"
+                  }
+                ]
+              };
+              
+              // 2. Convert to Blob URL and replace existing manifest link
+              var stringManifest = JSON.stringify(dynamicManifest);
+              var blob = new Blob([stringManifest], {type: 'application/json'});
+              var manifestURL = URL.createObjectURL(blob);
+              var linkTag = document.getElementById('manifest-link');
+              if (linkTag) {
+                linkTag.href = manifestURL;
+              }
+
+              // 3. Update Apple Touch Icon
+              var appleTag = document.getElementById('apple-icon');
+              if (appleTag) {
+                appleTag.href = data.schoolLogoUrl;
+              }
+            }
+          }
+        } catch (e) {
+          console.error("Failed to load custom manifest:", e);
+        }
+      })();
+    </script>
+
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {

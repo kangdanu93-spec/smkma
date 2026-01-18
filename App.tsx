@@ -96,8 +96,8 @@ export default function App() {
       ]
     },
     { 
-      label: "PPDB", 
-      mode: PortalMode.PPDB, 
+      label: "SPMB", 
+      externalUrl: "https://spmb-smkma.vercel.app",
       icon: ClipboardIcon, 
       special: "emerald" 
     },

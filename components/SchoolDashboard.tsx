@@ -111,7 +111,7 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
             </span>
-            PPDB 2026 RESMI DIBUKA
+            SPMB 2026 RESMI DIBUKA
           </div>
           
           <div className="space-y-4 flex flex-col items-center">
@@ -139,7 +139,7 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
                Tanya Asisten AI
              </button>
              <button 
-               onClick={() => onNavigate(PortalMode.PPDB)}
+               onClick={() => window.open('https://spmb-smkma.vercel.app', '_blank')}
                className="px-8 py-4 bg-white text-slate-900 font-bold rounded-xl border-b-4 border-slate-300 hover:border-white hover:bg-slate-50 shadow-xl hover:-translate-y-1 transition-all active:scale-95"
              >
                Daftar Sekarang
@@ -430,8 +430,8 @@ export default function SchoolDashboard({ onNavigate }: SchoolDashboardProps) {
                           </button>
                         </li>
                         <li>
-                          <button onClick={() => onNavigate(PortalMode.PPDB)} className="text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-2">
-                             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> Pendaftaran (PPDB)
+                          <button onClick={() => window.open('https://spmb-smkma.vercel.app', '_blank')} className="text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-2">
+                             <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> Pendaftaran (SPMB)
                           </button>
                         </li>
                         <li>

@@ -4,10 +4,59 @@ import { PrincipalData, NewsItem, MajorItem } from '../types';
 
 export interface Registrant {
   id: string;
+  // Basic Info
   name: string;
-  schoolOrigin: string;
-  phone: string;
+  gender: 'L' | 'P';
   major: string;
+  uniformSize: string;
+  
+  // Section A: Personal Data
+  nisn: string;
+  nik: string;
+  kk: string;
+  birthPlace: string;
+  birthDate: string;
+  aktaNo: string;
+  religion: string;
+  citizenship: string; // WNI or WNA
+  country?: string; // If WNA
+  specialNeeds: string[]; // Array of codes (A, B, C...)
+
+  // Section B: Address
+  address: string;
+  rt: string;
+  rw: string;
+  dusun: string;
+  kelurahan: string;
+  kecamatan: string;
+  postalCode: string;
+  latitude: string;
+  longitude: string;
+  residenceType: string;
+  transportMode: string;
+
+  // Additional Data
+  childOrder: string;
+  hasKIP: string; // 'Ya' | 'Tidak'
+
+  // Section: Father's Data
+  fatherName: string;
+  fatherNik: string;
+  fatherBirthYear: string;
+  fatherEducation: string;
+  fatherJob: string;
+  fatherIncome: string;
+  fatherSpecialNeeds: string[];
+
+  // Section: Mother's Data
+  motherName: string;
+  motherNik: string;
+  motherBirthYear: string;
+  motherEducation: string;
+  motherJob: string;
+  motherIncome: string;
+  motherSpecialNeeds: string[];
+
   timestamp: string;
 }
 
@@ -48,7 +97,7 @@ const HERO_DOC_ID = 'hero_images';
 const LOCAL_STORAGE_REGISTRANTS_KEY = 'ppdb_registrants_local';
 const LOCAL_STORAGE_PRINCIPAL_KEY = 'principal_data_local';
 const LOCAL_STORAGE_NEWS_KEY = 'school_news_local';
-const LOCAL_STORAGE_MAJORS_KEY = 'school_majors_local';
+const LOCAL_STORAGE_MAJORS_KEY = 'school_majors_data_v5'; 
 const LOCAL_STORAGE_HERO_KEY = 'hero_images_local';
 
 export const databaseService = {
@@ -89,14 +138,55 @@ export const databaseService = {
       try {
         const q = query(collection(db, COLLECTION_NAME), orderBy('timestamp', 'desc'));
         const querySnapshot = await getDocs(q);
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
+        querySnapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          // Map Firestore data to Registrant Interface safely
           firebaseResults.push({
-            id: doc.id,
-            name: data.name,
-            schoolOrigin: data.schoolOrigin,
-            phone: data.phone,
-            major: data.major,
+            id: docSnap.id,
+            name: data.name || '',
+            gender: data.gender || 'L',
+            major: data.major || '',
+            uniformSize: data.uniformSize || '',
+            nisn: data.nisn || '',
+            nik: data.nik || '',
+            kk: data.kk || '',
+            birthPlace: data.birthPlace || '',
+            birthDate: data.birthDate || '',
+            aktaNo: data.aktaNo || '',
+            religion: data.religion || '',
+            citizenship: data.citizenship || 'WNI',
+            country: data.country || '',
+            specialNeeds: data.specialNeeds || [],
+            address: data.address || '',
+            rt: data.rt || '',
+            rw: data.rw || '',
+            dusun: data.dusun || '',
+            kelurahan: data.kelurahan || '',
+            kecamatan: data.kecamatan || '',
+            postalCode: data.postalCode || '',
+            latitude: data.latitude || '',
+            longitude: data.longitude || '',
+            residenceType: data.residenceType || '',
+            transportMode: data.transportMode || '',
+            childOrder: data.childOrder || '',
+            hasKIP: data.hasKIP || 'Tidak',
+            // Father Data
+            fatherName: data.fatherName || '',
+            fatherNik: data.fatherNik || '',
+            fatherBirthYear: data.fatherBirthYear || '',
+            fatherEducation: data.fatherEducation || '',
+            fatherJob: data.fatherJob || '',
+            fatherIncome: data.fatherIncome || '',
+            fatherSpecialNeeds: data.fatherSpecialNeeds || [],
+            // Mother Data
+            motherName: data.motherName || '',
+            motherNik: data.motherNik || '',
+            motherBirthYear: data.motherBirthYear || '',
+            motherEducation: data.motherEducation || '',
+            motherJob: data.motherJob || '',
+            motherIncome: data.motherIncome || '',
+            motherSpecialNeeds: data.motherSpecialNeeds || [],
+            
             timestamp: data.timestamp?.toDate ? data.timestamp.toDate().toISOString() : new Date().toISOString()
           });
         });
@@ -341,40 +431,39 @@ export const databaseService = {
         const parsedData = JSON.parse(existingData);
         return parsedData;
       } else {
-        // Return Default Data if completely empty (First Run)
+        // Return Default Data (3 Majors: DKV, TKR, MPLB)
         const defaults: MajorItem[] = [
           {
             id: 'default-1',
             code: 'DKV',
             name: 'Desain Komunikasi Visual',
-            description: 'Mempelajari seni mengolah bahasa visual (gambar, video, animasi) untuk keperluan komunikasi multimedia.',
+            description: 'Mempelajari seni desain grafis, ilustrasi, fotografi, videografi, dan multimedia untuk industri kreatif.',
             logoUrl: '',
             colorTheme: 'orange',
-            skills: ["Desain Grafis", "Fotografi", "Videografi", "3D Modelling"],
-            careers: ["Graphic Designer", "Video Editor", "Content Creator"]
+            skills: ["Desain Grafis", "Fotografi", "Videografi", "Animasi 2D/3D"],
+            careers: ["Graphic Designer", "Video Editor", "Photographer", "Content Creator"]
           },
           {
             id: 'default-2',
             code: 'TKR',
             name: 'Teknik Kendaraan Ringan',
-            description: 'Fokus pada penguasaan jasa perbaikan kendaraan ringan (mobil), overhaul mesin, dan kelistrikan.',
+            description: 'Mempelajari perawatan, perbaikan mesin, sistem pemindah tenaga, dan kelistrikan otomotif mobil.',
             logoUrl: '',
             colorTheme: 'blue',
-            skills: ["Service Mesin", "Kelistrikan Otomotif", "Spooring Balancing"],
-            careers: ["Mekanik Senior", "Service Advisor", "Wirausaha Bengkel"]
+            skills: ["Service Mesin", "Tune Up", "Overhaul", "Kelistrikan Body"],
+            careers: ["Mekanik Mobil", "Service Advisor", "Teknisi Otomotif"]
           },
           {
             id: 'default-3',
-            code: 'AP',
-            name: 'Administrasi Perkantoran',
-            description: 'Menyiapkan tenaga profesional bidang administrasi bisnis modern, kearsipan digital, dan public speaking.',
+            code: 'MPLB',
+            name: 'Manajemen Perkantoran',
+            description: 'Mempelajari administrasi perkantoran modern, kearsipan digital, komunikasi bisnis, dan pelayanan prima.',
             logoUrl: '',
             colorTheme: 'purple',
-            skills: ["Arsip Digital", "Public Speaking", "Administrasi"],
-            careers: ["Staff Admin", "Sekretaris", "Resepsionis"]
+            skills: ["Arsip Digital", "Korespondensi", "Public Speaking", "Ms Office"],
+            careers: ["Staff Admin", "Sekretaris", "Resepsionis", "Customer Service"]
           }
         ];
-        // Save defaults to local storage so they are editable
         localStorage.setItem(LOCAL_STORAGE_MAJORS_KEY, JSON.stringify(defaults));
         return defaults;
       }
